@@ -172,6 +172,25 @@
     <p id="bibliotheque-vide" class="liste-vide" hidden>
       Aucun script pour l'instant. Créez-en un ou importez un fichier texte ou PDF.
     </p>
+
+    <!-- Sauvegarde : tous les scripts dans un seul fichier .json, à garder à
+         l'abri ou à restaurer sur un autre appareil. -->
+    <section class="carte carte-sauvegarde" aria-labelledby="titre-sauvegarde">
+      <h2 id="titre-sauvegarde" class="etiquette">Sauvegarde des scripts</h2>
+      <p class="texte-doux">
+        Vos scripts ne sont stockés que dans ce navigateur. Enregistrez-les dans un
+        fichier pour les garder à l'abri, ou pour les retrouver sur un autre appareil.
+      </p>
+      <div class="rangee-boutons">
+        <button id="bouton-sauvegarder-scripts" class="bouton bouton-secondaire" type="button">
+          <svg class="icone"><use href="#i-telecharger"></use></svg> Sauvegarder mes scripts
+        </button>
+        <label class="bouton bouton-secondaire" for="champ-restauration">
+          <svg class="icone"><use href="#i-importer"></use></svg> Restaurer une sauvegarde
+        </label>
+        <input id="champ-restauration" class="visuellement-cache" type="file" accept=".json,application/json">
+      </div>
+    </section>
   </section>
 
   <!-- =====================================================================
@@ -198,6 +217,11 @@
     <p class="astuce">
       Astuce : un passage entre crochets, [comme ceci], s'affiche en couleur atténuée
       pendant la lecture. Pratique pour les indications : [pause], [sourire], [montrer le produit].
+    </p>
+    <p class="astuce">
+      Sections : une ligne qui commence par « # » suivi d'une espace, comme
+      « # Introduction », marque le début d'une partie. Pendant la lecture, le bouton
+      des réglages rapides permet alors de sauter directement à n'importe quelle partie.
     </p>
 
     <div class="rangee-boutons">
@@ -425,6 +449,12 @@
     </header>
 
     <div id="panneau-reglages-rapides" class="panneau-rapide" hidden>
+      <!-- Rempli par app.js avec les sections du script (lignes « # … »).
+           Reste caché si le script n'en contient aucune. -->
+      <div id="bloc-sections" class="bloc-sections" hidden>
+        <p class="etiquette">Aller à une section</p>
+        <div id="liste-sections" class="liste-sections"></div>
+      </div>
       <div class="champ">
         <label for="rapide-vitesse">Vitesse <output data-valeur-reglage="vitesse"></output></label>
         <input id="rapide-vitesse" type="range" min="40" max="300" step="5" data-reglage="vitesse">
@@ -460,7 +490,8 @@
     </div>
 
     <footer class="prompteur-bas">
-      <div class="progression" aria-hidden="true">
+      <span id="section-actuelle" class="section-actuelle"></span>
+      <div id="progression" class="progression" aria-hidden="true">
         <div id="barre-progression" class="barre-progression"></div>
       </div>
       <div class="commandes">

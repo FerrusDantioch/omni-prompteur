@@ -41,6 +41,13 @@ Dans les deux modes :
 - Nombre de mots et durée de lecture estimée.
 - Les passages entre crochets, `[comme ceci]`, s'affichent en couleur atténuée : idéal
   pour les indications de jeu (`[pause]`, `[sourire]`…).
+- **Sections** : une ligne qui commence par `# ` (dièse puis espace), comme
+  `# Introduction`, marque le début d'une partie. Pendant la lecture, le nom de la
+  section en cours s'affiche, la barre de progression montre où commence chacune, et
+  le panneau des réglages rapides permet de sauter directement à l'une d'elles.
+- **Sauvegarde** de tous les scripts dans un fichier `.json`, et **restauration** sur
+  le même appareil ou sur un autre. La restauration n'écrase jamais rien : un script
+  déjà présent mais modifié depuis est gardé en double, avec la mention « (sauvegarde) ».
 
 ### Réglages d'affichage
 
@@ -82,6 +89,11 @@ node serveur-local.js
 
 Puis ouvrir **http://localhost:5190**. N'importe quel autre serveur de fichiers
 statiques convient aussi.
+
+Par sécurité, ce serveur ne répond qu'à l'ordinateur sur lequel il tourne : les autres
+appareils du réseau ne peuvent pas lire les fichiers. Pour un essai volontaire depuis
+un autre appareil (texte seulement, la caméra exigeant `https://`) :
+`HOTE=0.0.0.0 node serveur-local.js`.
 
 ---
 
@@ -131,6 +143,7 @@ sous-dossier qu'à la racine d'un domaine, sans rien modifier.
 | Lecture / pause du texte | Toucher le texte | Espace ou K |
 | Avancer / reculer | Glisser le texte du doigt, boutons ⌄ ⌃ | ↓ ↑ (une ligne), Page suivante / Page précédente ou → ← (trois lignes) |
 | Retour au début | Bouton ⏮ | Début |
+| Section suivante / précédente | Réglages rapides → « Aller à une section » | S / P |
 | Vitesse | Boutons + et − | + et − |
 | Masquer le texte (Vidéaste) | Bouton œil | M |
 | Plein écran | Bouton plein écran | F |
@@ -165,7 +178,7 @@ flèches, fonctionnent directement.
 - Les données sont liées au navigateur et à l'adresse du site. **Effacer les données du
   site, désinstaller l'application sur certains appareils ou changer d'adresse de
   publication efface scripts et enregistrements.** Téléchargez les enregistrements
-  importants.
+  importants, et sauvegardez vos scripts (Bibliothèque → « Sauvegarder mes scripts »).
 - L'application demande au navigateur un stockage « persistant », qui n'est pas effacé
   automatiquement quand l'appareil manque de place.
 - L'espace utilisé et l'espace disponible sont indiqués dans « Mes enregistrements ».

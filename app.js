@@ -542,7 +542,7 @@ let profondeurHistorique = 0;
 const actionsEcrans = {
   accueil: { arrivee: () => afficherAccueil() },
   bibliotheque: { arrivee: () => afficherBibliotheque() },
-  editeur: { depart: () => quitterEditeur() },
+  editeur: { arrivee: () => verifierEditeurOuvert(), depart: () => quitterEditeur() },
   reglages: { arrivee: () => synchroniserChampsReglages() },
   enregistrements: { arrivee: () => afficherEnregistrements() },
   prompteur: { arrivee: () => demarrerPrompteur(), depart: () => fermerPrompteur() }
@@ -935,6 +935,17 @@ function sauvegarderEditeur() {
     });
 }
 
+/**
+ * Appelée à l'arrivée sur l'écran de l'éditeur. Normalement, ouvrirEditeur()
+ * a déjà préparé un script. Mais le bouton « page suivante » du navigateur
+ * peut ramener ici après coup, sans script : on afficherait alors un ancien
+ * texte dont les modifications ne seraient jamais enregistrées. Dans ce cas,
+ * retour à l'accueil.
+ */
+function verifierEditeurOuvert() {
+  if (!editeur.script) setTimeout(revenirAccueil, 0);
+}
+
 /** Appelée automatiquement quand on quitte l'écran de l'éditeur. */
 function quitterEditeur() {
   const script = editeur.script;
@@ -1232,7 +1243,7 @@ function assemblerParagraphes(pages) {
       const ecart = lignes[i - 1].y - lignes[i].y;
       if (ecart > 0) ecarts.push(ecart);
     }
-    const ecartHabituel = mediane(ecarts) || lignes[0].hauteur * 1.2;
+    const ecartHabituel = medianeBasse(ecarts) || lignes[0].hauteur * 1.2;
     const bordGauche = Math.min(...lignes.map((l) => l.x));
     const bordDroit = Math.max(...lignes.map((l) => l.fin));
     const largeurColonne = bordDroit - bordGauche;
@@ -1274,11 +1285,17 @@ function estNumeroDePage(texte) {
   return /^[\s–—-]*(page\s*)?\d{1,4}(\s*(\/|sur|of)\s*\d{1,4})?[\s–—-]*$/i.test(texte);
 }
 
-function mediane(nombres) {
+/**
+ * Médiane « basse » : la valeur du milieu une fois les nombres triés ; s'il y
+ * en a un nombre pair, la plus petite des deux valeurs du milieu (et non leur
+ * moyenne). Exemple utile sur une page courte : écarts [12, 25] → 12. Avec la
+ * moyenne (18,5), le saut de 25 entre deux paragraphes ne paraîtrait pas
+ * assez grand et les deux paragraphes seraient collés.
+ */
+function medianeBasse(nombres) {
   if (!nombres.length) return 0;
   const tries = [...nombres].sort((a, b) => a - b);
-  const milieu = Math.floor(tries.length / 2);
-  return tries.length % 2 ? tries[milieu] : (tries[milieu - 1] + tries[milieu]) / 2;
+  return tries[Math.floor((tries.length - 1) / 2)];
 }
 
 /* =========================================================================
@@ -2083,7 +2100,7 @@ function mettreAJourNiveauMicro() {
    ========================================================================= */
 
 const enregistrement = {
-  etat: 'inactif',              // 'inactif' | 'decompte' | 'enregistrement' | 'pause' | 'finalisation'
+  etat: 'inactif',              // 'inactif' | 'decompte' | 'demarrage' | 'enregistrement' | 'pause' | 'finalisation'
   enregistreur: null,           // l'objet MediaRecorder
   fiche: null,                  // la fiche de l'enregistrement dans la base
   indexMorceau: 0,
@@ -2138,7 +2155,7 @@ function mettreAJourCommandesEnregistrement() {
 
   const boutonEnregistrer = $('bouton-enregistrer');
   boutonEnregistrer.hidden = actif || etat === 'finalisation';
-  boutonEnregistrer.disabled = !possible || etat === 'decompte';
+  boutonEnregistrer.disabled = !possible || etat === 'decompte' || etat === 'demarrage';
   boutonEnregistrer.title = possible ? 'Démarrer l\'enregistrement' : 'Caméra ou micro indisponible';
 
   const boutonPause = $('bouton-pause-enregistrement');
@@ -2232,6 +2249,24 @@ async function demarrerEnregistrement() {
     mettreAJourCommandesEnregistrement();
     return;
   }
+  /* État « démarrage » : il couvre la courte attente de l'écriture de la
+     fiche (plus bas). Sans lui, un double appui rapide sur « Enregistrer »
+     lancerait DEUX enregistreurs, dont un tournerait sans fin, invisible. */
+  enregistrement.etat = 'demarrage';
+  mettreAJourCommandesEnregistrement();
+  try {
+    await preparerEtLancerEnregistreur(flux);
+  } finally {
+    /* Démarrage raté : on revient à l'état de repos, boutons compris. */
+    if (enregistrement.etat === 'demarrage') {
+      enregistrement.etat = 'inactif';
+      if (ecranActuel === 'prompteur') mettreAJourCommandesEnregistrement();
+    }
+  }
+}
+
+/** Crée le MediaRecorder, sa fiche dans la base, et démarre l'enregistrement. */
+async function preparerEtLancerEnregistreur(flux) {
   const type = prompteur.mode === 'videaste' ? 'video' : 'audio';
   const format = choisirFormat(type);
 
@@ -2249,7 +2284,6 @@ async function demarrerEnregistrement() {
       enregistreur = new MediaRecorder(flux); // réglages par défaut du navigateur
     } catch (erreur) {
       notifier('L\'enregistrement n\'a pas pu démarrer : ' + erreur.message, 'erreur');
-      mettreAJourCommandesEnregistrement();
       return;
     }
   }
@@ -2271,7 +2305,13 @@ async function demarrerEnregistrement() {
     await bd.ecrire('enregistrements', fiche);
   } catch (erreur) {
     notifier('Stockage indisponible, enregistrement impossible : ' + erreur.message, 'erreur');
-    mettreAJourCommandesEnregistrement();
+    return;
+  }
+
+  /* Pendant cette courte attente, l'utilisateur a pu quitter le prompteur
+     (la caméra est alors éteinte) ou relancer la caméra : on abandonne. */
+  if (media.flux !== flux || ecranActuel !== 'prompteur') {
+    bd.supprimerEnregistrement(fiche.id).catch(console.error);
     return;
   }
 
@@ -2315,7 +2355,6 @@ async function demarrerEnregistrement() {
     libererVerrou();
     bd.supprimerEnregistrement(fiche.id).catch(console.error);
     notifier('L\'enregistrement n\'a pas pu démarrer : ' + erreur.message, 'erreur');
-    mettreAJourCommandesEnregistrement();
     return;
   }
 
@@ -2452,9 +2491,14 @@ const PREFIXE_VERROU = 'prompteur-createurs-enregistrement-';
 
 function prendreVerrou(id) {
   if (!navigator.locks) return;
-  navigator.locks
-    .request(PREFIXE_VERROU + id, () => new Promise((liberer) => { enregistrement.libererVerrou = liberer; }))
-    .catch(() => {});
+  /* Le verrou est tenu tant que cette promesse n'est pas résolue. On la crée
+     AVANT la demande : le navigateur accorde le verrou un peu plus tard, et
+     si l'enregistrement s'arrête entre-temps, libererVerrou() doit déjà
+     pouvoir agir (sinon le verrou resterait tenu jusqu'à la fermeture). */
+  let liberer;
+  const tantQueEnregistrement = new Promise((resoudre) => { liberer = resoudre; });
+  enregistrement.libererVerrou = liberer;
+  navigator.locks.request(PREFIXE_VERROU + id, () => tantQueEnregistrement).catch(() => {});
 }
 
 function libererVerrou() {
@@ -3154,6 +3198,9 @@ function deverrouillerOrientation() {
 /** L'application passe en arrière-plan (autre appli, écran verrouillé…) ou revient. */
 function surChangementVisibilite() {
   if (document.hidden) {
+    /* Un décompte en cours est annulé : sinon l'enregistrement démarrerait
+       pendant que l'application est en arrière-plan. */
+    annulerDecompte();
     /* Sur téléphone, la caméra est coupée en arrière-plan : on met
        l'enregistrement en pause plutôt que d'enregistrer une image figée. */
     if (enregistrement.etat === 'enregistrement') {

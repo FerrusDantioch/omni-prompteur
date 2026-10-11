@@ -56,6 +56,10 @@ propose « Mettre à jour » (refusé pendant un enregistrement).
   `fichiers` (blobs), `morceaux` (morceaux écrits chaque seconde pendant un
   enregistrement, réassemblés à l'arrêt, ou au démarrage suivant après une
   interruption).
+- Scripts : une ligne `# Titre` (dièse + espace) est un titre de section
+  (`LIGNE_SECTION`), exclu du compte de mots. Sauvegarde/restauration en JSON
+  (`format: 'prompteur-createurs/scripts'`, `version: 1`) ; la restauration n'écrase
+  jamais un script existant.
 - Enregistrement : `MediaRecorder` sur le flux caméra/micro uniquement ; le texte du
   prompteur n'est jamais capté. La durée des WebM est ajoutée par un correctif de
   l'en-tête EBML (`corrigerDureeWebm`).

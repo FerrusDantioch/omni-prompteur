@@ -404,6 +404,11 @@ small {
   overflow-wrap: anywhere;
 }
 
+.carte-sauvegarde {
+  display: grid;
+  gap: 10px;
+}
+
 .carte-script-actif .rangee-boutons {
   margin-top: 12px;
 }
@@ -886,6 +891,25 @@ input[type="color"] {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 14px rgba(0, 0, 0, 0.7);
 }
 
+/* Titres de section (lignes « # … » du script) : petits, en capitales, sous
+   un trait fin qui marque le début d'une nouvelle partie. currentColor reprend
+   la couleur du texte choisie dans les réglages : lisible sur tous les fonds.
+   Deux classes dans le sélecteur pour l'emporter sur « .texte-prompteur p ». */
+.texte-prompteur .section-prompteur {
+  margin: 1.4em 0 0.9em;
+  padding-top: 0.5em;
+  border-top: 1px solid currentColor;
+  font-size: 0.6em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.texte-prompteur .section-prompteur:first-child {
+  margin-top: 0;
+}
+
 /* Les [indications] entre crochets : plus petites et atténuées. */
 .indication {
   font-size: 0.75em;
@@ -1171,6 +1195,7 @@ body.prompteur-actif {
 }
 
 .progression {
+  position: relative; /* repère pour les traits des sections */
   height: 4px;
   margin-bottom: 10px;
   overflow: hidden;
@@ -1183,6 +1208,37 @@ body.prompteur-actif {
   background: var(--accent);
   transform: scaleX(0);
   transform-origin: left;
+}
+
+/* Un petit trait sur la barre de progression au début de chaque section
+   (app.js règle sa position horizontale). */
+.repere-section {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1px;
+  background: #ffffff;
+}
+
+/* Nom de la section en cours, au-dessus de la barre de progression, à gauche. */
+.prompteur-bas > .section-actuelle {
+  position: absolute;
+  top: 0;
+  left: calc(12px + var(--sur-gauche));
+  max-width: calc(100% - 140px);
+  overflow: hidden;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  text-overflow: ellipsis; /* titre trop long : terminé par « … » */
+  white-space: nowrap;
+  text-shadow: 0 1px 2px #000000;
+  pointer-events: none; /* purement informatif : les gestes passent au travers */
+}
+
+.section-actuelle:empty {
+  display: none;
 }
 
 .temps-restant {
@@ -1279,6 +1335,47 @@ body.prompteur-actif {
   border-radius: var(--rayon);
   background: rgba(18, 20, 26, 0.95);
   box-shadow: var(--ombre);
+}
+
+/* Liste « Aller à une section », en tête du panneau rapide. */
+.bloc-sections {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bordure);
+}
+
+.bloc-sections .etiquette {
+  margin: 0;
+}
+
+.liste-sections {
+  display: grid;
+  gap: 6px;
+}
+
+.bouton-section {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  background: var(--surface-2);
+  color: var(--texte);
+  font-weight: 700;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.bouton-section:hover {
+  background: var(--surface-3);
+}
+
+/* La section que l'on est en train de lire. */
+.bouton-section.est-actuelle {
+  border-color: var(--accent);
+  box-shadow: inset 4px 0 0 var(--accent);
 }
 
 /* --- Message caméra / micro indisponible --- */

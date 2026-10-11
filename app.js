@@ -13,7 +13,7 @@
      5.  Notifications et boîtes de dialogue
      6.  Bibliothèque de scripts
      7.  Éditeur de script
-     8.  Import de fichiers .txt et .pdf
+     8.  Import de fichiers .txt et .pdf, sauvegarde des scripts
      9.  Moteur de défilement du texte
     10.  Écran du prompteur : ouverture, commandes, clavier
     11.  Caméra et micro
@@ -137,12 +137,21 @@ function formaterDate(horodatage) {
 }
 
 /**
- * Compte les mots réellement prononcés : les [indications] entre crochets
- * sont ignorées. « aujourd'hui » ou « peut-être » comptent pour un seul mot.
+ * Une ligne de section : « # » (ou plusieurs), au moins une espace, puis le
+ * titre. « #tuto » (sans espace) reste du texte ordinaire : c'est un hashtag.
+ * Le drapeau m fait correspondre ^ et $ au début et à la fin de CHAQUE ligne.
+ */
+const LIGNE_SECTION = /^[ \t]*#+[ \t]+(\S.*)$/;
+const LIGNES_SECTION = /^[ \t]*#+[ \t]+\S.*$/gm;
+
+/**
+ * Compte les mots réellement prononcés : les [indications] entre crochets et
+ * les titres de section (# …) sont ignorés. « aujourd'hui » ou « peut-être »
+ * comptent pour un seul mot.
  * \p{L} signifie « n'importe quelle lettre » (accents compris), \p{N} « chiffre ».
  */
 function compterMots(texte) {
-  const sansIndications = (texte || '').replace(/\[[^\]]*\]/g, ' ');
+  const sansIndications = (texte || '').replace(LIGNES_SECTION, ' ').replace(/\[[^\]]*\]/g, ' ');
   const mots = sansIndications.match(/[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu);
   return mots ? mots.length : 0;
 }
@@ -819,6 +828,8 @@ function initialiserBibliotheque() {
   $('bouton-nouveau-script').addEventListener('click', () => ouvrirEditeur(null));
   $('recherche-scripts').addEventListener('input', dessinerListeScripts);
   $('champ-import').addEventListener('change', importerFichiersChoisis);
+  $('bouton-sauvegarder-scripts').addEventListener('click', sauvegarderTousLesScripts);
+  $('champ-restauration').addEventListener('change', restaurerSauvegarde);
   $('bouton-modifier-script-actif').addEventListener('click', () => {
     const id = lireIdScriptActif();
     if (id) ouvrirEditeur(id);
@@ -841,11 +852,15 @@ async function creerScriptDeBienvenue() {
   const script = await creerScript({
     titre: 'Bienvenue dans Prompteur Créateurs',
     texte: [
+      '# Les bases',
       'Bonjour et bienvenue ! Ce texte d\'exemple défile pour vous montrer comment fonctionne le prompteur.',
       'Touchez le texte pour mettre en pause, puis touchez-le de nouveau pour reprendre. Vous pouvez aussi le faire glisser du doigt pour avancer ou revenir en arrière.',
       '[Petite pause] Les passages entre crochets comme celui-ci sont des indications : ils s\'affichent en plus petit et ne sont pas comptés dans la durée de lecture.',
       'Les boutons + et − règlent la vitesse en direct, en mots par minute. Le petit triangle orange marque la ligne à lire : placez-le près du haut de l\'écran, proche de l\'objectif, pour que votre regard reste naturel.',
+      '# Pendant le tournage',
+      'Les titres comme celui ci-dessus découpent le texte en sections : une ligne qui commence par un dièse suivi d\'une espace. Le bouton des réglages rapides, en haut à droite, permet de sauter directement à l\'une d\'elles.',
       'En mode Vidéaste, le bouton en forme d\'œil masque le texte pendant que vous réglez votre cadrage. Et rassurez-vous : le texte n\'apparaît jamais dans la vidéo enregistrée.',
+      '# Pour commencer',
       'Pour commencer, créez votre propre script ou importez un fichier texte ou PDF depuis la bibliothèque. Bon tournage !'
     ].join('\n\n')
   });
@@ -890,8 +905,11 @@ async function ouvrirEditeur(id) {
 function mettreAJourStatistiquesEditeur() {
   const texte = $('champ-texte').value;
   const mots = compterMots(texte);
+  const sections = (texte.match(LIGNES_SECTION) || []).length;
   $('statistiques-texte').textContent =
-    `${mots} mots · ${texte.length} caractères · lecture ${formaterDureeLecture(mots, reglages.vitesse)} à ${reglages.vitesse} mots/min`;
+    `${mots} mots · ${texte.length} caractères · `
+    + (sections ? `${sections} section${sections > 1 ? 's' : ''} · ` : '')
+    + `lecture ${formaterDureeLecture(mots, reglages.vitesse)} à ${reglages.vitesse} mots/min`;
 }
 
 function surModificationEditeur() {
@@ -1080,11 +1098,16 @@ async function lireFichierTexte(fichier) {
   return nettoyerTexteImporte(texte);
 }
 
-/** Uniformise un texte importé : fins de ligne, caractères invisibles, lignes vides. */
-function nettoyerTexteImporte(texte) {
+/** Fins de ligne uniformes et caractères de contrôle invisibles retirés. */
+function retirerCaracteresParasites(texte) {
   return texte
     .replace(/\r\n?/g, '\n')                                        // fins de ligne Windows et anciens Mac
-    .replace(/\p{Cc}/gu, (car) => (car === '\n' || car === '\t' ? car : '')) // caractères de contrôle parasites
+    .replace(/\p{Cc}/gu, (car) => (car === '\n' || car === '\t' ? car : '')); // caractères de contrôle parasites
+}
+
+/** Uniformise un texte importé : fins de ligne, caractères invisibles, lignes vides. */
+function nettoyerTexteImporte(texte) {
+  return retirerCaracteresParasites(texte)
     .replace(/[ \t]+$/gm, '')                                       // espaces en fin de ligne
     .replace(/\n{3,}/g, '\n\n')                                     // au plus une ligne vide d'affilée
     .trim();
@@ -1298,6 +1321,144 @@ function medianeBasse(nombres) {
   return tries[Math.floor((tries.length - 1) / 2)];
 }
 
+/* --- Sauvegarde et restauration de tous les scripts ---
+   Les scripts ne vivent que dans le navigateur : effacer les données du site
+   les ferait disparaître. La sauvegarde les range tous dans un fichier .json
+   (un simple fichier texte structuré), que l'on peut garder où l'on veut puis
+   « restaurer » plus tard, sur cet appareil ou sur un autre. */
+
+/** Étiquette écrite dans le fichier : elle permet de reconnaître nos sauvegardes. */
+const FORMAT_SAUVEGARDE = 'prompteur-createurs/scripts';
+const VERSION_SAUVEGARDE = 1;
+const TAILLE_MAX_SAUVEGARDE = 50 * 1024 * 1024; // 50 Mo : des milliers de scripts
+
+/** Date du jour au format « 2026-10-11 », pratique dans un nom de fichier (tri par date). */
+function dateDuJour() {
+  const date = new Date();
+  const mois = String(date.getMonth() + 1).padStart(2, '0');
+  const jour = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${mois}-${jour}`;
+}
+
+/** « 1 script » / « 3 scripts ». */
+const nombreDeScripts = (nombre) => `${nombre} script${nombre > 1 ? 's' : ''}`;
+
+/** Bouton « Sauvegarder mes scripts » : télécharge un fichier .json. */
+async function sauvegarderTousLesScripts() {
+  let scripts;
+  try {
+    scripts = await chargerScripts();
+  } catch (erreur) {
+    notifier('Impossible de lire la bibliothèque : ' + erreur.message, 'erreur');
+    return;
+  }
+  if (!scripts.length) {
+    notifier('La bibliothèque est vide : il n\'y a rien à sauvegarder.');
+    return;
+  }
+  const contenu = {
+    format: FORMAT_SAUVEGARDE,
+    version: VERSION_SAUVEGARDE,
+    sauvegardeLe: new Date().toISOString(),
+    scripts: scripts.map(({ id, titre, texte, creeLe, modifieLe }) => ({ id, titre, texte, creeLe, modifieLe }))
+  };
+  /* JSON.stringify(…, null, 2) : fichier indenté, lisible dans un éditeur de texte. */
+  const fichier = new Blob([JSON.stringify(contenu, null, 2)], { type: 'application/json' });
+  telechargerFichier(fichier, `prompteur-createurs-scripts-${dateDuJour()}.json`);
+  notifier(`Sauvegarde créée : ${nombreDeScripts(scripts.length)}. Rangez ce fichier en lieu sûr.`, 'succes');
+}
+
+/**
+ * Lit et vérifie un fichier de sauvegarde. Rien n'est cru sur parole : chaque
+ * script est contrôlé (types, longueurs, caractères) avant d'entrer dans la
+ * base, car le fichier a pu être modifié à la main ou venir d'ailleurs.
+ */
+async function lireSauvegarde(fichier) {
+  if (fichier.size > TAILLE_MAX_SAUVEGARDE) throw new Error('fichier trop volumineux (plus de 50 Mo).');
+  let donnees;
+  try {
+    donnees = JSON.parse(await fichier.text());
+  } catch {
+    throw new Error('ce fichier n\'est pas une sauvegarde lisible.');
+  }
+  if (!donnees || donnees.format !== FORMAT_SAUVEGARDE || !Array.isArray(donnees.scripts)) {
+    throw new Error('ce fichier n\'est pas une sauvegarde de Prompteur Créateurs.');
+  }
+  if (Number(donnees.version) > VERSION_SAUVEGARDE) {
+    throw new Error('cette sauvegarde vient d\'une version plus récente de l\'application. Mettez l\'application à jour, puis réessayez.');
+  }
+
+  const maintenant = Date.now();
+  const dateValide = (valeur) => (Number.isFinite(valeur) && valeur > 0 ? valeur : maintenant);
+  const identifiantsVus = new Set();
+  const scripts = [];
+
+  for (const brut of donnees.scripts) {
+    if (!brut || typeof brut.texte !== 'string') continue;
+    const titre = typeof brut.titre === 'string'
+      ? retirerCaracteresParasites(brut.titre).replace(/\s+/g, ' ').trim().slice(0, 120)
+      : '';
+    const texte = retirerCaracteresParasites(brut.texte);
+    if (!titre && !texte.trim()) continue; // script vide : inutile
+
+    /* Identifiant absent, farfelu ou en double dans le fichier : on en fabrique un. */
+    let id = typeof brut.id === 'string' && brut.id.length > 0 && brut.id.length <= 100 ? brut.id : '';
+    if (!id || identifiantsVus.has(id)) id = nouvelIdentifiant();
+    identifiantsVus.add(id);
+
+    scripts.push({ id, titre, texte, creeLe: dateValide(brut.creeLe), modifieLe: dateValide(brut.modifieLe) });
+  }
+  if (!scripts.length) throw new Error('aucun script trouvé dans cette sauvegarde.');
+  return scripts;
+}
+
+/**
+ * Bouton « Restaurer une sauvegarde ». Aucun script existant n'est jamais
+ * écrasé :
+ *   - script absent de l'appareil → ajouté ;
+ *   - script déjà présent, identique → ignoré (pas de doublon) ;
+ *   - script déjà présent mais modifié depuis → les DEUX versions sont gardées,
+ *     celle de la sauvegarde avec la mention « (sauvegarde) » dans son titre.
+ */
+async function restaurerSauvegarde(evenement) {
+  const champ = evenement.target;
+  const fichier = champ.files[0];
+  champ.value = ''; // permet de choisir à nouveau le même fichier plus tard
+  if (!fichier) return;
+
+  try {
+    const scripts = await lireSauvegarde(fichier);
+    const existants = new Map((await chargerScripts()).map((script) => [script.id, script]));
+
+    const aEcrire = [];
+    let dejaPresents = 0;
+    for (const script of scripts) {
+      const existant = existants.get(script.id);
+      if (!existant) {
+        aEcrire.push(script);
+      } else if (existant.titre === script.titre && existant.texte === script.texte) {
+        dejaPresents += 1;
+      } else {
+        const titre = `${script.titre || 'Sans titre'} (sauvegarde)`.slice(0, 120);
+        aEcrire.push({ ...script, id: nouvelIdentifiant(), titre });
+      }
+    }
+
+    /* Une seule transaction : soit tous les scripts sont ajoutés, soit aucun. */
+    if (aEcrire.length) await bd.ecrireEnsemble(aEcrire.map((objet) => ({ magasin: 'scripts', objet })));
+
+    let message = aEcrire.length
+      ? `${nombreDeScripts(aEcrire.length)} restauré${aEcrire.length > 1 ? 's' : ''}.`
+      : 'Rien à restaurer : tous ces scripts sont déjà sur cet appareil.';
+    if (aEcrire.length && dejaPresents) message += ` ${nombreDeScripts(dejaPresents)} déjà présent${dejaPresents > 1 ? 's' : ''}, ignoré${dejaPresents > 1 ? 's' : ''}.`;
+    notifier(message, aEcrire.length ? 'succes' : 'info');
+  } catch (erreur) {
+    console.error(erreur);
+    notifier(`« ${fichier.name} » : ${erreur.message}`, 'erreur');
+  }
+  afficherBibliotheque();
+}
+
 /* =========================================================================
    9. MOTEUR DE DÉFILEMENT DU TEXTE
    -------------------------------------------------------------------------
@@ -1327,19 +1488,91 @@ const defilement = {
   idAnimation: null,
   mesuresValides: false,
   glissement: null,      // informations sur le doigt (ou la souris) qui fait glisser le texte
-  dernierAffichage: { position: null, ratio: null, restant: null }
+  sections: [],          // { titre, element, repere, bouton, position } pour chaque ligne « # … »
+  dernierAffichage: { position: null, ratio: null, restant: null, section: null }
 };
 
-/** Transforme le texte brut en paragraphes affichables. */
+/**
+ * Découpe le texte brut en « blocs » : des paragraphes (séparés par une ligne
+ * vide) et des titres de section (lignes « # … »). Un titre coupe toujours
+ * le paragraphe en cours, même sans ligne vide autour.
+ * @returns {Array<{texte: string} | {section: string}>}
+ */
+function decouperEnBlocs(texte) {
+  const blocs = [];
+  let lignes = [];
+  const terminerParagraphe = () => {
+    const paragraphe = lignes.join('\n').trim();
+    if (paragraphe) blocs.push({ texte: paragraphe });
+    lignes = [];
+  };
+
+  for (const ligne of texte.split(/\r?\n/)) {
+    const section = ligne.match(LIGNE_SECTION);
+    if (section) {
+      terminerParagraphe();
+      blocs.push({ section: section[1].trim() });
+    } else if (!ligne.trim()) {
+      terminerParagraphe(); // ligne vide : fin du paragraphe
+    } else {
+      lignes.push(ligne);
+    }
+  }
+  terminerParagraphe();
+  return blocs;
+}
+
+/** Transforme le texte brut en paragraphes et titres de section affichables. */
 function preparerTexte(texte) {
-  const paragraphes = texte.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
-  $('texte-defilant').replaceChildren(...paragraphes.map(creerParagraphePrompteur));
+  const elements = [];
+  const sections = [];
+  for (const bloc of decouperEnBlocs(texte)) {
+    if (bloc.section === undefined) {
+      elements.push(creerParagraphePrompteur(bloc.texte));
+    } else {
+      const element = creerElement('p', { classe: 'section-prompteur', texte: bloc.section });
+      sections.push({ titre: bloc.section, element, repere: null, bouton: null, position: 0 });
+      elements.push(element);
+    }
+  }
+  $('texte-defilant').replaceChildren(...elements);
+
+  defilement.sections = sections;
   defilement.nombreDeMots = compterMots(texte);
   defilement.position = 0;
   defilement.positionMax = 0;
   defilement.cible = null;
-  defilement.dernierAffichage = { position: null, ratio: null, restant: null };
+  defilement.dernierAffichage = { position: null, ratio: null, restant: null, section: null };
+  preparerNavigationSections();
   demanderNouvellesMesures();
+}
+
+/**
+ * Prépare tout ce qui permet de passer d'une section à l'autre : un bouton
+ * par section dans le panneau des réglages rapides, et un petit trait par
+ * section sur la barre de progression (placé par mesurer()).
+ */
+function preparerNavigationSections() {
+  const sections = defilement.sections;
+  $('bloc-sections').hidden = sections.length === 0;
+  $('liste-sections').replaceChildren(...sections.map((section, numero) => {
+    section.bouton = creerBouton({
+      texte: section.titre,
+      classe: 'bouton-section',
+      action: () => {
+        allerASection(numero);
+        basculerPanneauRapide(false); // on referme pour voir le texte
+      }
+    });
+    return section.bouton;
+  }));
+
+  /* Les anciens traits de la barre de progression sont retirés. */
+  for (const trait of document.querySelectorAll('#progression .repere-section')) trait.remove();
+  for (const section of sections) {
+    section.repere = creerElement('span', { classe: 'repere-section' });
+    $('progression').append(section.repere);
+  }
 }
 
 /** Un paragraphe : les retours à la ligne simples deviennent des <br>, les [indications] des <span>. */
@@ -1394,6 +1627,20 @@ function mesurer() {
     : defilement.hauteurLigne / 6;
   defilement.position = borner(proportionLue * hauteurDuContenu, 0, hauteurDuContenu);
   defilement.cible = null;
+
+  /* Position de chaque section : celle qui amène son titre sur le repère de
+     lecture. On compare au haut du texte (et non de l'écran) : le décalage
+     du défilement s'annule ainsi dans la soustraction. */
+  const hautDuTexte = texte.getBoundingClientRect().top;
+  for (const section of defilement.sections) {
+    const hautDuTitre = section.element.getBoundingClientRect().top - hautDuTexte;
+    section.position = borner(hautDuTitre - hauteurRepere, 0, hauteurDuContenu);
+    /* element.style est autorisé par la CSP (seul l'attribut style="…" du HTML est bloqué). */
+    const pourcentage = hauteurDuContenu > 0 ? (section.position / hauteurDuContenu) * 100 : 0;
+    section.repere.style.left = pourcentage + '%';
+    section.repere.hidden = pourcentage <= 0; // un trait tout au début ne servirait à rien
+  }
+
   defilement.mesuresValides = true;
   return true;
 }
@@ -1471,6 +1718,24 @@ function afficherPosition() {
     $('temps-restant').textContent = restant;
     memoire.restant = restant;
   }
+
+  /* Section en cours : la dernière dont le titre a atteint le repère. */
+  const numero = numeroSectionEnCours(defilement.position);
+  if (numero !== memoire.section) {
+    const section = defilement.sections[numero];
+    $('section-actuelle').textContent = section ? section.titre : '';
+    defilement.sections.forEach((s, i) => s.bouton.classList.toggle('est-actuelle', i === numero));
+    memoire.section = numero;
+  }
+}
+
+/** Numéro de la section où se trouve cette position (-1 : avant la première). */
+function numeroSectionEnCours(position) {
+  let numero = -1;
+  defilement.sections.forEach((section, i) => {
+    if (section.position <= position + 1) numero = i;
+  });
+  return numero;
 }
 
 function demarrerBoucleDefilement() {
@@ -1522,6 +1787,55 @@ const avancer = () => sauterDe(defilement.hauteurLigne * 3);
 
 function revenirAuDebut() {
   defilement.cible = 0;
+}
+
+/* --- Sections (lignes « # … » du script) --- */
+
+/** Saut animé jusqu'au titre d'une section, qui vient se placer sur le repère. */
+function allerASection(numero) {
+  if (!defilement.mesuresValides) mesurer();
+  const section = defilement.sections[numero];
+  if (section) defilement.cible = section.position;
+}
+
+/** Position de départ d'un saut : la cible déjà visée, sinon la position actuelle. */
+function positionDeReference() {
+  return defilement.cible !== null ? defilement.cible : defilement.position;
+}
+
+function signalerAbsenceDeSections() {
+  notifier('Ce script n\'a pas de sections. Pour en créer, commencez une ligne par « # » suivi d\'une espace.');
+}
+
+function allerSectionSuivante() {
+  if (!defilement.sections.length) {
+    signalerAbsenceDeSections();
+    return;
+  }
+  if (!defilement.mesuresValides) mesurer();
+  const depart = positionDeReference();
+  const numero = defilement.sections.findIndex((section) => section.position > depart + 2);
+  if (numero >= 0) allerASection(numero);
+  else notifier('Vous êtes dans la dernière section.');
+}
+
+/**
+ * Comme sur un lecteur de musique : si l'on est déjà avancé dans une section,
+ * on revient à son début ; si l'on vient d'y arriver, on passe à la précédente.
+ */
+function allerSectionPrecedente() {
+  if (!defilement.sections.length) {
+    signalerAbsenceDeSections();
+    return;
+  }
+  if (!defilement.mesuresValides) mesurer();
+  const limite = positionDeReference() - defilement.hauteurLigne; // une ligne de tolérance
+  let numero = -1;
+  defilement.sections.forEach((section, i) => {
+    if (section.position < limite) numero = i;
+  });
+  if (numero >= 0) allerASection(numero);
+  else revenirAuDebut(); // avant la première section : retour au tout début
 }
 
 function changerVitesse(ecart) {
@@ -1739,6 +2053,14 @@ function gererClavierPrompteur(evenement) {
       break;
     case 'Home':
       revenirAuDebut();
+      break;
+    case 's':
+    case 'S':
+      allerSectionSuivante();
+      break;
+    case 'p':
+    case 'P':
+      allerSectionPrecedente();
       break;
     case '+':
     case '=':

@@ -18,6 +18,15 @@ const path = require('path');
 const PORT = process.env.PORT || 5190;
 const RACINE = __dirname;
 
+/* Sécurité : par défaut, le serveur ne répond QU'À CET ORDINATEUR
+   (127.0.0.1, l'adresse « moi-même »). Les autres appareils du réseau, par
+   exemple sur le Wi-Fi d'un café, ne peuvent donc pas lire les fichiers du
+   dossier. Pour un essai volontaire depuis un autre appareil du réseau :
+     HOTE=0.0.0.0 node serveur-local.js
+   (le texte s'affichera, mais caméra et micro resteront bloqués : sur une
+   adresse autre que localhost, le navigateur exige https://). */
+const HOTE = process.env.HOTE || '127.0.0.1';
+
 /* À chaque extension de fichier correspond un « type de contenu ».
    Détail important : les modules JavaScript (.mjs, utilisés par pdf.js)
    DOIVENT être annoncés comme du JavaScript, sinon le navigateur les refuse. */
@@ -71,6 +80,7 @@ http.createServer((requete, reponse) => {
     });
     reponse.end(contenu);
   });
-}).listen(PORT, () => {
+}).listen(PORT, HOTE, () => {
   console.log('Prompteur Créateurs : http://localhost:' + PORT);
+  if (HOTE !== '127.0.0.1') console.log('Attention : le serveur est aussi accessible depuis le réseau (' + HOTE + ').');
 });

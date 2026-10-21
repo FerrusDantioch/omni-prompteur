@@ -2876,11 +2876,19 @@ async function recupererEnregistrementsInterrompus() {
   }
 }
 
-/** Demande au navigateur de ne jamais effacer nos données pour faire de la place. */
+/** Demande au navigateur de ne jamais effacer nos données pour faire de la place.
+    Certains navigateurs (Firefox) affichent alors une fenêtre d'autorisation :
+    pour ne jamais en faire surgir une au démarrage, on ne demande que si le
+    navigateur a déjà répondu « accordé » (Chrome, pour une application
+    installée, sans rien afficher). Sinon, on renonce en silence. */
 function demanderStockagePersistant() {
-  if (!navigator.storage || !navigator.storage.persist) return;
+  if (!navigator.storage || !navigator.storage.persist || !navigator.permissions) return;
   navigator.storage.persisted()
-    .then((dejaAccorde) => dejaAccorde || navigator.storage.persist())
+    .then((dejaAccorde) => {
+      if (dejaAccorde) return;
+      return navigator.permissions.query({ name: 'persistent-storage' })
+        .then((etat) => { if (etat.state === 'granted') return navigator.storage.persist(); });
+    })
     .catch(() => {});
 }
 

@@ -107,8 +107,8 @@ Tous les chemins sont relatifs : l'application fonctionne aussi bien dans un
 sous-dossier qu'à la racine d'un domaine, sans rien modifier.
 
 > Comme toute application web, les fichiers servis (HTML, CSS, JavaScript) sont
-> lisibles par les personnes qui ouvrent l'application. Leur réutilisation reste
-> interdite : voir la section [Licence](#licence).
+> lisibles par les personnes qui ouvrent l'application. Leur réutilisation dans
+> un but commercial reste interdite : voir la section [Licence](#licence).
 
 ---
 
@@ -200,7 +200,7 @@ fonts/              polices intégrées (.woff2) et leurs licences
 libs/pdfjs/         pdf.js (lecture des PDF) et sa licence
 serveur-local.js    petit serveur de test, facultatif (non utilisé en ligne)
 .claude/launch.json configuration du serveur de test pour Claude Code
-LICENSE             licence : tous droits réservés, réutilisation interdite
+LICENSE             licence PolyForm Noncommercial : pas d'usage commercial
 ```
 
 Aucune dépendance à installer, aucune étape de compilation.
@@ -267,10 +267,15 @@ Les icônes et l'interface ont été créées spécifiquement pour ce projet.
 
 ## Licence
 
-© 2026 FerrusDantioch — **tous droits réservés.** Le code est consultable, mais sa
-réutilisation est interdite : copie, modification, redistribution, hébergement ou
-exploitation commerciale nécessitent une autorisation écrite préalable. Les
-conditions complètes figurent dans le fichier [LICENSE](LICENSE).
+Distribué sous licence **[PolyForm Noncommercial 1.0.0](LICENSE)** (texte
+officiel en anglais, suivi d'une traduction française à titre indicatif).
+
+Vous pouvez utiliser, modifier et partager ce code librement, à condition que
+ce ne soit pas dans un but commercial et que le fichier de licence accompagne
+toujours le code. Toute utilisation commerciale nécessite l'accord de
+l'auteur. Le logiciel est fourni « en l'état », sans aucune garantie.
 
 L'application en ligne reste libre d'utilisation. Les composants tiers (pdf.js et
 les polices) conservent leur propre licence, indiquée plus haut.
+
+© 2026 FerrusDantioch

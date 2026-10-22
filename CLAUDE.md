@@ -1,11 +1,11 @@
 # Prompteur Créateurs — notes pour Claude
 
 PWA de télé-prompteur (modes Vidéaste et Podcast) en **HTML/CSS/JS pur, sans
-framework ni étape de compilation**. Dépôt **public sous licence propriétaire**
-(réutilisation du code interdite, voir `LICENSE`) ; l'application en ligne est
-gratuite et un bouton de don est prévu. Code et commentaires en français, rédigés
-pour un développeur débutant : conserver ce niveau d'explication dans toute
-modification.
+framework ni étape de compilation**. Dépôt **public sous licence PolyForm
+Noncommercial 1.0.0** (usage commercial interdit, voir `LICENSE`) ; l'application
+en ligne est gratuite et un bouton de don est prévu. Code et commentaires en
+français, rédigés pour un développeur débutant : conserver ce niveau
+d'explication dans toute modification.
 
 ## ⚠️ Avant de pousser : incrémenter la version du service worker
 
@@ -33,8 +33,12 @@ propose « Mettre à jour » (refusé pendant un enregistrement).
 
 ## Contraintes du projet
 
-- **Licence propriétaire** (`LICENSE`) : ne jamais proposer ni ajouter de licence
-  open source, et ne pas modifier `LICENSE` sans demande explicite.
+- **Licence PolyForm Noncommercial 1.0.0** (`LICENSE`, depuis octobre 2026, à la
+  place de l'ancienne licence propriétaire) : le code peut être partagé et modifié,
+  mais jamais utilisé dans un but commercial. Le fichier contient le texte officiel
+  anglais, copié sans aucune modification (ne jamais le retoucher), puis une
+  traduction française non officielle. Ne pas proposer d'autre licence, et ne pas
+  modifier `LICENSE` sans demande explicite.
 - **Aucun appel réseau externe, aucun CDN.** La CSP de `index.html`
   (`default-src 'self'`) les bloquerait de toute façon. Une bibliothèque doit être
   copiée dans `libs/`, sous licence permissive uniquement (MIT, Apache 2.0, BSD ;

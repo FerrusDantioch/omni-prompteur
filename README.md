@@ -107,8 +107,9 @@ Tous les chemins sont relatifs : l'application fonctionne aussi bien dans un
 sous-dossier qu'à la racine d'un domaine, sans rien modifier.
 
 > Comme toute application web, les fichiers servis (HTML, CSS, JavaScript) sont
-> lisibles par les personnes qui ouvrent l'application. Leur réutilisation dans
-> un but commercial reste interdite : voir la section [Licence](#licence).
+> lisibles par les personnes qui ouvrent l'application. Leur modification et leur
+> réutilisation dans un but commercial restent interdites : voir la section
+> [Licence](#licence).
 
 ---
 
@@ -200,7 +201,7 @@ fonts/              polices intégrées (.woff2) et leurs licences
 libs/pdfjs/         pdf.js (lecture des PDF) et sa licence
 serveur-local.js    petit serveur de test, facultatif (non utilisé en ligne)
 .claude/launch.json configuration du serveur de test pour Claude Code
-LICENSE             licence PolyForm Noncommercial : pas d'usage commercial
+LICENSE             licence CC BY-NC-ND 4.0 : ni vente ni modification
 ```
 
 Aucune dépendance à installer, aucune étape de compilation.
@@ -267,13 +268,15 @@ Les icônes et l'interface ont été créées spécifiquement pour ce projet.
 
 ## Licence
 
-Distribué sous licence **[PolyForm Noncommercial 1.0.0](LICENSE)** (texte
-officiel en anglais, suivi d'une traduction française à titre indicatif).
+Distribué sous licence **[Creative Commons BY-NC-ND 4.0](LICENSE)**
+(Attribution - Utilisation non commerciale - Pas d'Œuvre dérivée), avec le
+texte officiel en anglais et sa traduction française officielle.
 
-Vous pouvez utiliser, modifier et partager ce code librement, à condition que
-ce ne soit pas dans un but commercial et que le fichier de licence accompagne
-toujours le code. Toute utilisation commerciale nécessite l'accord de
-l'auteur. Le logiciel est fourni « en l'état », sans aucune garantie.
+Vous pouvez utiliser ce logiciel et en partager des copies identiques,
+gratuitement, à condition de citer l'auteur (Ferrus Dantioch) et d'indiquer la
+licence. Il est interdit de le vendre ou d'en tirer un profit commercial, et
+de diffuser une version modifiée. Le logiciel est fourni « en l'état », sans
+aucune garantie.
 
 L'application en ligne reste libre d'utilisation. Les composants tiers (pdf.js et
 les polices) conservent leur propre licence, indiquée plus haut.

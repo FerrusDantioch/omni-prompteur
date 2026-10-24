@@ -1,10 +1,10 @@
 {
-  "name": "Prompteur Créateurs",
-  "short_name": "Prompteur",
+  "name": "Omni-Prompteur",
+  "short_name": "Omni-Prompteur",
   "description": "Télé-prompteur pour créateurs de contenu : texte défilant sur l'aperçu caméra ou pendant un enregistrement audio, 100 % hors ligne.",
   "lang": "fr",
   "dir": "ltr",
-  "id": "/prompteur-createurs/",
+  "id": "/omni-prompteur/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

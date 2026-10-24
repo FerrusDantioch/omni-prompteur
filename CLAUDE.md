@@ -1,4 +1,4 @@
-# Prompteur Créateurs — notes pour Claude
+# Omni-Prompteur — notes pour Claude
 
 PWA de télé-prompteur (modes Vidéaste et Podcast) en **HTML/CSS/JS pur, sans
 framework ni étape de compilation**. Dépôt **public sous licence Creative Commons
@@ -14,7 +14,7 @@ Après toute modification d'un fichier **mis en cache** (`index.html`, `styles.c
 haut de `sw.js` :
 
 ```js
-const VERSION = 'prompteur-createurs-v1';   // → v2
+const VERSION = 'omni-prompteur-v8';   // → v9
 ```
 
 Sans ce changement, le navigateur ne détecte aucun service worker différent, ne
@@ -88,11 +88,11 @@ les caractères littéraux, puis vérifier avec `node --check app.js`.
 
 ## Déploiement
 
-GitHub Pages, branche `main`, racine → https://ferrusdantioch.github.io/prompteur-createurs/
+GitHub Pages, branche `main`, racine → https://ferrusdantioch.github.io/omni-prompteur/
 
 ## Champ `id` du manifeste : nom du dossier, jamais `./`
 
-`manifest.json` contient `"id": "/prompteur-createurs/"`. Chrome résout `id` par rapport à
+`manifest.json` contient `"id": "/omni-prompteur/"`. Chrome résout `id` par rapport à
 la **racine du domaine** (`https://ferrusdantioch.github.io/`), pas par
 rapport au dossier de l'application : `"id": "./"` (ou `"."`) donnait donc
 l'identité de la racine du site, la même pour toutes les applications qui
@@ -101,6 +101,11 @@ l'utilisaient. C'est une exception voulue à la règle des chemins relatifs.
 Ne plus changer cette valeur : pour Chrome, une application déjà installée
 dont l'`id` change devient une autre application (il faut la désinstaller
 puis la réinstaller pour qu'elle reprenne les mises à jour).
+
+Exception unique (octobre 2026) : l'application s'appelait « Prompteur Créateurs » et
+vivait à `/prompteur-createurs/`. Le renommage du dépôt a changé son adresse,
+donc son `id` : les personnes qui l'avaient installée doivent la réinstaller
+depuis la nouvelle adresse (leurs données restent, le stockage n'a pas changé).
 
 ## ⚠️ Plusieurs applications sur `ferrusdantioch.github.io` : limite de Chrome Android
 

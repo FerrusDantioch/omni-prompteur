@@ -1,11 +1,11 @@
-# Prompteur Créateurs
+# Omni-Prompteur
 
-**▶ Utiliser l'application en ligne : https://ferrusdantioch.github.io/prompteur-createurs/**
+**▶ Utiliser l'application en ligne : https://ferrusdantioch.github.io/omni-prompteur/**
 
 **Le télé-prompteur des créateurs de contenu.** Votre texte défile à l'écran pendant
 que vous filmez ou enregistrez votre voix, sans jamais quitter l'application.
 
-Prompteur Créateurs est une application web installable (PWA) : elle s'installe sur
+Omni-Prompteur est une application web installable (PWA) : elle s'installe sur
 un téléphone ou un ordinateur comme une application classique, fonctionne
 **entièrement hors connexion** après la première visite et **n'envoie aucune donnée
 sur Internet**.
@@ -100,7 +100,7 @@ un autre appareil (texte seulement, la caméra exigeant `https://`) :
 ## Mise en ligne
 
 L'application est publiée avec GitHub Pages, depuis la branche `main` (dossier
-racine) : **https://ferrusdantioch.github.io/prompteur-createurs/**.
+racine) : **https://ferrusdantioch.github.io/omni-prompteur/**.
 Chaque envoi sur `main` met le site à jour en moins d'une minute.
 
 Tous les chemins sont relatifs : l'application fonctionne aussi bien dans un
@@ -213,7 +213,7 @@ Aucune dépendance à installer, aucune étape de compilation.
 en haut de `sw.js` :
 
 ```js
-const VERSION = 'prompteur-createurs-v1';   // → v2, v3…
+const VERSION = 'omni-prompteur-v8';   // → v9, v10…
 ```
 
 Sans cela, les personnes ayant déjà ouvert l'application continuent de voir

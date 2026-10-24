@@ -1,5 +1,5 @@
 /* =========================================================================
-   Service worker de Prompteur Créateurs
+   Service worker d'Omni-Prompteur
    -------------------------------------------------------------------------
    Un « service worker » est un petit script que le navigateur installe à
    côté de la page. Il s'intercale entre l'application et le réseau : ici,
@@ -14,11 +14,15 @@
    manquera hors ligne.
    ========================================================================= */
 
-const VERSION = 'prompteur-createurs-v7';
+const VERSION = 'omni-prompteur-v8';
 
 /* Début commun à tous nos caches. Il permet de reconnaître (et de supprimer)
    les caches de nos anciennes versions sans toucher à rien d'autre. */
-const PREFIXE_CACHE = 'prompteur-createurs-';
+const PREFIXE_CACHE = 'omni-prompteur-';
+
+/* Début des caches de l'époque où l'application s'appelait « Prompteur
+   Créateurs » : eux aussi sont supprimés, ils ne servent plus. */
+const ANCIEN_PREFIXE_CACHE = 'prompteur-createurs-';
 
 /* La liste complète des fichiers nécessaires au fonctionnement hors ligne. */
 const FICHIERS = [
@@ -66,7 +70,7 @@ self.addEventListener('activate', (evenement) => {
     caches.keys()
       .then((noms) => Promise.all(
         noms
-          .filter((nom) => nom.startsWith(PREFIXE_CACHE) && nom !== VERSION)
+          .filter((nom) => (nom.startsWith(PREFIXE_CACHE) || nom.startsWith(ANCIEN_PREFIXE_CACHE)) && nom !== VERSION)
           .map((nom) => caches.delete(nom))
       ))
       /* clients.claim() : le service worker prend immédiatement le contrôle

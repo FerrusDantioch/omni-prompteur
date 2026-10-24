@@ -81,6 +81,6 @@ http.createServer((requete, reponse) => {
     reponse.end(contenu);
   });
 }).listen(PORT, HOTE, () => {
-  console.log('Prompteur Créateurs : http://localhost:' + PORT);
+  console.log('Omni-Prompteur : http://localhost:' + PORT);
   if (HOTE !== '127.0.0.1') console.log('Attention : le serveur est aussi accessible depuis le réseau (' + HOTE + ').');
 });

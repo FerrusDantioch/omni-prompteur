@@ -1,5 +1,5 @@
 /* =========================================================================
-   Prompteur Créateurs — app.js
+   Omni-Prompteur — app.js
    -------------------------------------------------------------------------
    Tout le fonctionnement de l'application, en JavaScript « pur » : aucun
    framework, aucune étape de compilation. La seule bibliothèque utilisée est
@@ -850,7 +850,7 @@ async function creerScriptDeBienvenue() {
     return;
   }
   const script = await creerScript({
-    titre: 'Bienvenue dans Prompteur Créateurs',
+    titre: 'Bienvenue dans Omni-Prompteur',
     texte: [
       '# Les bases',
       'Bonjour et bienvenue ! Ce texte d\'exemple défile pour vous montrer comment fonctionne le prompteur.',
@@ -1364,7 +1364,7 @@ async function sauvegarderTousLesScripts() {
   };
   /* JSON.stringify(…, null, 2) : fichier indenté, lisible dans un éditeur de texte. */
   const fichier = new Blob([JSON.stringify(contenu, null, 2)], { type: 'application/json' });
-  telechargerFichier(fichier, `prompteur-createurs-scripts-${dateDuJour()}.json`);
+  telechargerFichier(fichier, `omni-prompteur-scripts-${dateDuJour()}.json`);
   notifier(`Sauvegarde créée : ${nombreDeScripts(scripts.length)}. Rangez ce fichier en lieu sûr.`, 'succes');
 }
 
@@ -1382,7 +1382,7 @@ async function lireSauvegarde(fichier) {
     throw new Error('ce fichier n\'est pas une sauvegarde lisible.');
   }
   if (!donnees || donnees.format !== FORMAT_SAUVEGARDE || !Array.isArray(donnees.scripts)) {
-    throw new Error('ce fichier n\'est pas une sauvegarde de Prompteur Créateurs.');
+    throw new Error('ce fichier n\'est pas une sauvegarde d\'Omni-Prompteur.');
   }
   if (Number(donnees.version) > VERSION_SAUVEGARDE) {
     throw new Error('cette sauvegarde vient d\'une version plus récente de l\'application. Mettez l\'application à jour, puis réessayez.');

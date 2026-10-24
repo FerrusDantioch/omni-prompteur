@@ -14,7 +14,7 @@ Après toute modification d'un fichier **mis en cache** (`index.html`, `styles.c
 haut de `sw.js` :
 
 ```js
-const VERSION = 'omni-prompteur-v8';   // → v9
+const VERSION = 'omni-prompteur-v9';   // → v10
 ```
 
 Sans ce changement, le navigateur ne détecte aucun service worker différent, ne
@@ -34,10 +34,11 @@ propose « Mettre à jour » (refusé pendant un enregistrement).
 ## Contraintes du projet
 
 - **Licence Creative Commons BY-NC-ND 4.0** (`LICENSE`, depuis octobre 2026, après
-  une licence propriétaire puis PolyForm Noncommercial) : le code peut être utilisé
+  une licence propriétaire puis une autre licence non commerciale) : le code peut être utilisé
   et partagé à l'identique en citant l'auteur, mais jamais modifié ni utilisé dans
-  un but commercial. Le fichier contient le texte officiel anglais puis la
-  traduction française officielle de Creative Commons, copiés sans aucune
+  un but commercial. Le fichier commence par « © 2026 Ferrus Dantioch », puis
+  contient le texte officiel anglais et la traduction française officielle de
+  Creative Commons, copiés sans aucune
   modification (ne jamais les retoucher). Ne pas proposer d'autre licence, et ne
   pas modifier `LICENSE` sans demande explicite.
 - **Aucun appel réseau externe, aucun CDN.** La CSP de `index.html`

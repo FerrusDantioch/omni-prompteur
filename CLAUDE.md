@@ -80,6 +80,17 @@ node serveur-local.js   # puis http://localhost:5190
 
 Caméra, micro et service worker exigent `https://` ou `http://localhost`.
 
+## Tests
+
+`node tests/tester.js` (Playwright + Chromium, 18 vérifications ; pour le
+Chromium installé ailleurs : `CHROMIUM_PATH=…`). `tests/outils.js` = boîte à
+outils commune (même fichier dans plusieurs applications) : serveur local à
+la forme d'adresse de GitHub Pages (port libre), contrôles communs (fichiers
+du service worker présents, téléphone sans débordement, `[hidden]` respecté,
+hors ligne, aucun autre site contacté, aucune erreur JavaScript). Le dossier
+`tests/` ne sert qu'au développement : il n'est pas dans le cache et ne
+demande pas de nouvelle version.
+
 ## Piège d'outillage
 
 Les outils d'écriture de fichiers de Claude convertissent les séquences d'échappement

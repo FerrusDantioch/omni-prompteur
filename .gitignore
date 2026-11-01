@@ -16,4 +16,8 @@ desktop.ini
 *.webm
 *.wav
 
-# Rien d'autre à ignorer : l'application n'a ni dépendance à installer ni étape de compilation.
+# Outils des tests automatiques (npm install playwright) : l'application, elle,
+# n'a ni dépendance à installer ni étape de compilation.
+node_modules/
+package.json
+package-lock.json

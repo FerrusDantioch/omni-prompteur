@@ -200,7 +200,7 @@ icons/              icônes (icon.svg est la source des PNG)
 fonts/              polices intégrées (.woff2) et leurs licences
 libs/pdfjs/         pdf.js (lecture des PDF) et sa licence
 serveur-local.js    petit serveur de test, facultatif (non utilisé en ligne)
-.claude/launch.json configuration du serveur de test pour Claude Code
+.claude/launch.json configuration du serveur de test (outil de développement)
 LICENSE             licence CC BY-NC-ND 4.0 : ni vente ni modification
 ```
 

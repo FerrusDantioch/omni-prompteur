@@ -7,7 +7,7 @@ desktop.ini
 .vscode/
 .idea/
 
-# Réglages personnels de Claude Code (propres à chaque ordinateur).
+# Réglages personnels de l'outil de développement (propres à chaque ordinateur).
 # Le fichier .claude/launch.json, lui, est partagé : il sert à lancer le serveur de test.
 .claude/settings.local.json
 

@@ -10,7 +10,7 @@ d'explication dans toute modification.
 ## ⚠️ Avant de pousser : incrémenter la version du service worker
 
 Après toute modification d'un fichier **mis en cache** (`index.html`, `styles.css`,
-`app.js`, `manifest.json`, `icons/`, `fonts/`, `libs/`), incrémenter la constante en
+`app.js`, `js/`, `manifest.json`, `icons/`, `fonts/`), incrémenter la constante en
 haut de `sw.js` :
 
 ```js
@@ -23,7 +23,9 @@ voir l'ancienne version**. Le symptôme est trompeur : le dépôt est à jour, m
 l'application ne change pas.
 
 En cas d'**ajout de fichier**, l'inscrire aussi dans la liste `FICHIERS` de `sw.js`,
-sinon il manquera hors ligne.
+sinon il manquera hors ligne. (`libs/pdfjs/` utilise un cache paresseux séparé
+`CACHE_PDF = 'omni-prompteur-pdf-v1'` / `FICHIERS_PDF`, à incrémenter uniquement lors
+d'une mise à jour de `pdf.js`.)
 
 **Ne pas** incrémenter pour un changement qui ne touche aucun fichier du cache
 (README, CLAUDE.md, `.gitignore`, `.gitattributes`, `serveur-local.js`, `.claude/`).
@@ -53,11 +55,15 @@ propose « Mettre à jour » (refusé pendant un enregistrement).
 
 ## Architecture en bref
 
-- `app.js` : 17 sections numérotées, sommaire en tête de fichier. Les écrans sont des
-  éléments `data-ecran` affichés un par un ; chaque changement est inscrit dans
+- `app.js` + `js/*.js` (17 modules ES natifs sans compilation, graphe acyclique) :
+  `app.js` relie les modules entre eux et gère le cycle de vie de la page
+  (`beforeunload`, `pagehide`, `pageshow`). Les écrans sont des éléments `data-ecran`
+  affichés un par un (`js/navigation.js`) ; chaque changement est inscrit dans
   l'historique pour que le bouton retour d'Android fonctionne.
-- Réglages : `localStorage`. Tout champ portant `data-reglage="nom"` est relié
-  automatiquement au réglage (écran Réglages et panneau rapide du prompteur).
+- Réglages : `localStorage` (`js/reglages.js`). Tout champ portant `data-reglage="nom"`
+  est relié automatiquement au réglage (écran Réglages et panneau rapide du
+  prompteur) ; `#reglage-camera` et `#reglage-micro` mémorisent le `deviceId` choisi
+  via `js/media.js`.
 - IndexedDB `prompteur-createurs` : `scripts`, `enregistrements` (fiches légères),
   `fichiers` (blobs), `morceaux` (morceaux écrits chaque seconde pendant un
   enregistrement, réassemblés à l'arrêt, ou au démarrage suivant après une
@@ -70,7 +76,8 @@ propose « Mettre à jour » (refusé pendant un enregistrement).
   prompteur n'est jamais capté. La durée des WebM est ajoutée par un correctif de
   l'en-tête EBML (`corrigerDureeWebm`).
 - pdf.js 6.3.289 (build « legacy ») dans `libs/pdfjs/`, chargé à la demande avec
-  `import()`.
+  `import()` depuis `js/pdf.js` et mis en cache paresseusement dans `CACHE_PDF`
+  (`omni-prompteur-pdf-v1`) au premier import PDF.
 
 ## Tester en local
 
@@ -96,7 +103,8 @@ demande pas de nouvelle version.
 Les outils d'écriture de fichiers de Claude convertissent les séquences d'échappement
 Unicode (antislash, « u », quatre chiffres hexadécimaux) en vrais caractères. Dans le
 code, préférer les classes Unicode des expressions régulières (`\p{Cc}`, `\p{L}`) ou
-les caractères littéraux, puis vérifier avec `node --check app.js`.
+les caractères littéraux, puis vérifier avec `node --check app.js` et sur chaque
+fichier `js/*.js`.
 
 ## Déploiement
 

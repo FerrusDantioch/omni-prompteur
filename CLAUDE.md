@@ -14,7 +14,7 @@ Après toute modification d'un fichier **mis en cache** (`index.html`, `styles.c
 haut de `sw.js` :
 
 ```js
-const VERSION = 'omni-prompteur-v9';   // → v10
+const VERSION = 'omni-prompteur-v11';   // → v12
 ```
 
 Sans ce changement, le navigateur ne détecte aucun service worker différent, ne

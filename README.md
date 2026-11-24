@@ -213,7 +213,7 @@ Aucune dépendance à installer, aucune étape de compilation.
 en haut de `sw.js` :
 
 ```js
-const VERSION = 'omni-prompteur-v8';   // → v9, v10…
+const VERSION = 'omni-prompteur-v11';   // → v12, v13…
 ```
 
 Sans cela, les personnes ayant déjà ouvert l'application continuent de voir

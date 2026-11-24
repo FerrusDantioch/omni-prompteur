@@ -1,0 +1,42 @@
+name: CI Omni-Prompteur
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Vérifier la syntaxe JavaScript et ESM (node --check)
+        run: |
+          while IFS= read -r -d '' f; do
+            node --check "$f"
+          done < <(find . \( -path ./node_modules -o -path ./.git \) -prune -o -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
+
+      - name: Contrôles statiques (CSP, .nojekyll, SW réciproque, DAG, docs)
+        run: node tests/verifier-statique.mjs
+
+      - name: Installer Playwright (sans modifier le dépôt)
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Tests E2E navigateur (Playwright)
+        run: node tests/tester.js
+
+      - name: Vérifier que le dépôt reste propre (.gitignore)
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)"

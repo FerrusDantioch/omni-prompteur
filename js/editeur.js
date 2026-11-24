@@ -9,7 +9,7 @@ import { $, nouvelIdentifiant, LIGNES_SECTION, compterMots, formaterDureeLecture
 import { bd } from './bd.js';
 import { reglages } from './reglages.js';
 import { notifier } from './dialogues.js';
-import { allerVers, revenir, revenirAccueil, attendreTransition } from './navigation.js';
+import { allerVers, revenir, revenirAccueil, attendreTransition, jetonNavigation } from './navigation.js';
 import { lireIdScriptActif, definirScriptActif, utiliserScript, supprimerScript } from './scripts.js';
 
 let jetonOuverture = 0;
@@ -27,15 +27,17 @@ export const editeur = {
 /** Ouvre l'éditeur sur un script existant (id) ou sur un nouveau (null). */
 export async function ouvrirEditeur(id) {
   const jeton = ++jetonOuverture;
+  const navDepart = jetonNavigation();
+  const estAnnule = () => jeton !== jetonOuverture || navDepart !== jetonNavigation();
   await attendreTransition();
-  if (jeton !== jetonOuverture) return;
+  if (estAnnule()) return;
   if (editeur.promesseFermeture) await editeur.promesseFermeture;
-  if (jeton !== jetonOuverture) return;
+  if (estAnnule()) return;
   if (editeur.script && !editeur.enFermeture) await quitterEditeur();
-  if (jeton !== jetonOuverture) return;
+  if (estAnnule()) return;
 
   const existant = id ? await bd.lire('scripts', id) : null;
-  if (jeton !== jetonOuverture) return;
+  if (estAnnule()) return;
   const maintenant = Date.now();
   editeur.script = existant || { id: nouvelIdentifiant(), titre: '', texte: '', creeLe: maintenant, modifieLe: maintenant };
   editeur.estNouveau = !existant;

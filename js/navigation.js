@@ -18,6 +18,9 @@ let idTransition = 0;
 /** Renvoie le nom de l'écran actuellement affiché. */
 export const ecranActuel = () => actuel;
 
+/** Identifiant monotone incrémenté à chaque changement d'écran réel. */
+export const jetonNavigation = () => idTransition;
+
 /** Renvoie une promesse résolue une fois la transition d'écran en cours terminée. */
 export const attendreTransition = () => chaineTransition.catch(() => {});
 

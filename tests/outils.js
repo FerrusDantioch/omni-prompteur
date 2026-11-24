@@ -22,12 +22,22 @@ const fs = require('fs');
 const path = require('path');
 
 let chromium;
-try {
-  ({ chromium } = require('playwright'));
-} catch (e) {
-  console.error('Playwright n’est pas installé. Tapez d’abord :  npm install playwright\n' +
-    'puis :  npx playwright install chromium');
-  process.exit(1);
+let modeNavigateur = 'playwright';
+if (process.env.USE_CDP !== '1') {
+  try {
+    ({ chromium } = require('playwright'));
+  } catch {
+    chromium = null;
+  }
+}
+if (!chromium) {
+  try {
+    ({ chromium } = require('./cdp.js'));
+    modeNavigateur = 'cdp';
+  } catch (e) {
+    console.error('Ni Playwright ni navigateur Chromium/Brave/Edge local disponible :', e.message);
+    process.exit(1);
+  }
 }
 
 const RACINE = path.resolve(__dirname, '..');           // le dossier de l'application
@@ -37,7 +47,8 @@ const TYPES = {
   '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8', '.webmanifest': 'application/manifest+json',
   '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2',
-  '.wasm': 'application/wasm', '.txt': 'text/plain; charset=utf-8', '.pdf': 'application/pdf'
+  '.wasm': 'application/wasm', '.txt': 'text/plain; charset=utf-8',
+  '.md': 'text/markdown; charset=utf-8', '.pdf': 'application/pdf'
 };
 
 /* ---------- Le serveur local ---------- */
@@ -51,12 +62,12 @@ function demarrerServeur() {
     if (!fichier.startsWith(RACINE + path.sep)) { res.writeHead(403); return res.end(); }
     fs.readFile(fichier, (err, contenu) => {
       if (err) { res.writeHead(404); return res.end('Introuvable'); }
-      res.writeHead(200, { 'Content-Type': TYPES[path.extname(fichier)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
+      res.writeHead(200, { 'Content-Type': TYPES[path.extname(fichier).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
       res.end(contenu);
     });
   });
   // Port 0 : le système choisit un port libre (jamais de conflit).
-  return new Promise((ok) => serveur.listen(0, () => ok(serveur)));
+  return new Promise((ok) => serveur.listen(0, '127.0.0.1', () => ok(serveur)));
 }
 
 /* ---------- Le bilan ---------- */
@@ -171,7 +182,7 @@ async function lancer(nom, fn, { autorises = [], argsNavigateur = [] } = {}) {
     args: argsNavigateur,
     ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {})
   });
-  console.log(`Tests de ${nom} sur ${adresse}`);
+  console.log(`Tests de ${nom} sur ${adresse} (moteur : ${modeNavigateur})`);
   try {
     await fn();
   } finally {
@@ -181,6 +192,7 @@ async function lancer(nom, fn, { autorises = [], argsNavigateur = [] } = {}) {
       verifier(erreurs.length === 0, 'aucune erreur JavaScript', [...new Set(erreurs)].slice(0, 5));
     });
     await navigateur.close();
+    serveur.closeAllConnections?.();
     serveur.close();
   }
   console.log('\n────────────────────────────────────────');

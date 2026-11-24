@@ -24,6 +24,7 @@ import {
   mettreEnPause,
   basculerLecture,
   revenirAuDebut,
+  sauterDe,
   reculer,
   avancer,
   allerSectionSuivante,
@@ -225,6 +226,7 @@ export function gererClavierPrompteur(evenement) {
       basculerPleinEcran();
       break;
     case 'Escape':
+      if (evenement.repeat) return;
       if (enregistrement.etat === 'decompte' || !$('decompte').hidden) annulerDecompte();
       else if (!$('panneau-reglages-rapides').hidden) basculerPanneauRapide(false);
       else quitterPrompteurAvecConfirmation();

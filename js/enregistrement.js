@@ -390,17 +390,32 @@ export function arreterEnregistrement({ ouvrirFiche = true } = {}) {
   /* stop() est appelé tout de suite (avant tout « await ») : même si
      l'utilisateur quitte l'écran à l'instant, les dernières images sont
      bien remises à MediaRecorder. */
-  if (enregistreur.state !== 'inactive') {
+  let etaitDejaInactif = enregistreur.state === 'inactive';
+  if (!etaitDejaInactif) {
     try {
       enregistreur.stop();
     } catch {
       /* enregistreur déjà arrêté */
+      etaitDejaInactif = enregistreur.state === 'inactive';
     }
   }
 
   enregistrement.promesseFinalisation = (async () => {
     try {
-      await enregistrement.promesseArret; // dernier morceau fourni
+      if (enregistrement.promesseArret) {
+        if (etaitDejaInactif) {
+          /* L'enregistreur était déjà inactif : si le navigateur n'a pas émis
+             « stop », on borne l'attente pour ne pas bloquer indéfiniment. */
+          let minuteur;
+          await Promise.race([
+            enregistrement.promesseArret,
+            new Promise((resoudre) => { minuteur = setTimeout(resoudre, 150); })
+          ]);
+          clearTimeout(minuteur);
+        } else {
+          await enregistrement.promesseArret; // dernier morceau fourni
+        }
+      }
       await enregistrement.ecritures;     // tous les morceaux écrits
       const ficheFinale = await finaliserEnregistrement(fiche.id, enregistrement.dureeCumulee);
       if (ficheFinale) {

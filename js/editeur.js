@@ -9,8 +9,10 @@ import { $, nouvelIdentifiant, LIGNES_SECTION, compterMots, formaterDureeLecture
 import { bd } from './bd.js';
 import { reglages } from './reglages.js';
 import { notifier } from './dialogues.js';
-import { allerVers, revenir, revenirAccueil } from './navigation.js';
+import { allerVers, revenir, revenirAccueil, attendreTransition } from './navigation.js';
 import { lireIdScriptActif, definirScriptActif, utiliserScript, supprimerScript } from './scripts.js';
+
+let jetonOuverture = 0;
 
 export const editeur = {
   script: null,       // le script en cours de modification
@@ -24,9 +26,16 @@ export const editeur = {
 
 /** Ouvre l'éditeur sur un script existant (id) ou sur un nouveau (null). */
 export async function ouvrirEditeur(id) {
+  const jeton = ++jetonOuverture;
+  await attendreTransition();
+  if (jeton !== jetonOuverture) return;
   if (editeur.promesseFermeture) await editeur.promesseFermeture;
+  if (jeton !== jetonOuverture) return;
+  if (editeur.script && !editeur.enFermeture) await quitterEditeur();
+  if (jeton !== jetonOuverture) return;
 
   const existant = id ? await bd.lire('scripts', id) : null;
+  if (jeton !== jetonOuverture) return;
   const maintenant = Date.now();
   editeur.script = existant || { id: nouvelIdentifiant(), titre: '', texte: '', creeLe: maintenant, modifieLe: maintenant };
   editeur.estNouveau = !existant;
@@ -134,27 +143,29 @@ export function quitterEditeur() {
   clearTimeout(editeur.minuteur);
   editeur.minuteur = null;
 
-  const promesse = (async () => {
-    try {
-      if (!script.titre.trim() && !script.texte.trim()) {
-        /* Script entièrement vidé : on attend une écriture éventuelle puis on supprime. */
-        if (editeur.promesseSauvegarde) await editeur.promesseSauvegarde;
-        if (!editeur.estNouveau) {
-          await bd.supprimer('scripts', script.id).catch(console.error);
-          if (lireIdScriptActif() === script.id) definirScriptActif(null);
+  let promesse;
+  promesse = Promise.resolve()
+    .then(async () => {
+      try {
+        if (!script.titre.trim() && !script.texte.trim()) {
+          /* Script entièrement vidé : on attend une écriture éventuelle puis on supprime. */
+          if (editeur.promesseSauvegarde) await editeur.promesseSauvegarde;
+          if (!editeur.estNouveau) {
+            await bd.supprimer('scripts', script.id).catch(console.error);
+            if (lireIdScriptActif() === script.id) definirScriptActif(null);
+          }
+        } else if (editeur.modifie || editeur.promesseSauvegarde) {
+          await sauvegarderEditeur();
         }
-      } else if (editeur.modifie || editeur.promesseSauvegarde) {
-        await sauvegarderEditeur();
+      } finally {
+        if (editeur.script === script) {
+          editeur.script = null;
+          editeur.modifie = false;
+        }
+        editeur.enFermeture = false;
+        if (editeur.promesseFermeture === promesse) editeur.promesseFermeture = null;
       }
-    } finally {
-      if (editeur.script === script) {
-        editeur.script = null;
-        editeur.modifie = false;
-      }
-      editeur.enFermeture = false;
-      if (editeur.promesseFermeture === promesse) editeur.promesseFermeture = null;
-    }
-  })();
+    });
   editeur.promesseFermeture = promesse;
   return promesse;
 }

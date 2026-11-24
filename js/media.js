@@ -410,6 +410,7 @@ export async function changerDeCamera() {
   } catch {
     cameras = [];
   }
+  if (ecranActuel() !== 'prompteur') return;
 
   if (cameras.length >= 2) {
     const idActuel = media.flux?.getVideoTracks?.()[0]?.getSettings?.().deviceId || reglages.cameraId;

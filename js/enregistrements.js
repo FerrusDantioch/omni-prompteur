@@ -108,7 +108,7 @@ export async function afficherEspaceStockage(fiches) {
 
 /** Ouvre la fiche d'un enregistrement : lecteur, nom modifiable, actions. */
 export async function ouvrirFicheMedia(fiche, { nouveau = false } = {}) {
-  if (ficheMedia.promesseNom) await ficheMedia.promesseNom;
+  while (ficheMedia.promesseNom) await ficheMedia.promesseNom;
 
   let rangement = null;
   try {
@@ -165,7 +165,7 @@ export function libererLecteurMedia() {
 
 /** Enregistre le nom tapé dans la fiche, s'il a changé (sérialisé via promesseNom). */
 export async function enregistrerNomDepuisFiche() {
-  if (ficheMedia.promesseNom) await ficheMedia.promesseNom;
+  while (ficheMedia.promesseNom) await ficheMedia.promesseNom;
   const fiche = ficheMedia.fiche;
   const nom = $('media-nom').value.trim();
   if (!fiche) return;
@@ -316,7 +316,7 @@ export function initialiserEnregistrements() {
   $('media-partager').addEventListener('click', partagerEnregistrement);
   $('media-wav').addEventListener('click', telechargerEnWav);
   $('media-supprimer').addEventListener('click', async () => {
-    if (ficheMedia.promesseNom) await ficheMedia.promesseNom;
+    while (ficheMedia.promesseNom) await ficheMedia.promesseNom;
     const fiche = ficheMedia.fiche;
     if (fiche && (await supprimerEnregistrement(fiche))) {
       ficheMedia.fiche = null;

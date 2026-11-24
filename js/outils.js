@@ -149,9 +149,9 @@ export function nettoyerNomFichier(nom, repli = 'enregistrement') {
     .replace(/[\\/:*?"<>|]/g, ' ') // caractères interdits sous Windows
     .replace(/\p{Cc}/gu, ' ') // caractères de contrôle invisibles
     .replace(/\s+/g, ' ')
-    .replace(/^\.+|\.+$/g, '') // retire les points en début et en fin
-    .trim()
-    .slice(0, 80);
+    .replace(/^[\s.]+|[\s.]+$/g, '') // retire espaces et points en début et en fin
+    .slice(0, 80)
+    .replace(/^[\s.]+|[\s.]+$/g, ''); // idem si la troncature révèle un espace ou un point en fin
   return propre || repli;
 }
 

@@ -35,52 +35,102 @@ const TYPES = {
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8',
-  '.json': 'application/manifest+json; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
+  '.wasm': 'application/wasm',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
-  '.md': 'text/plain; charset=utf-8',
+  '.md': 'text/markdown; charset=utf-8',
   '.pdf': 'application/pdf'
 };
 
-http.createServer((requete, reponse) => {
-  let demande;
-  try {
-    /* On retire les paramètres éventuels (?…) et on décode les accents. */
-    demande = decodeURIComponent(requete.url.split('?')[0]);
-  } catch {
-    reponse.writeHead(400).end('Adresse invalide');
+function envoyerTexte(reponse, statut, corps, methode, entetesExtra = {}) {
+  const tampon = Buffer.from(corps, 'utf8');
+  reponse.writeHead(statut, {
+    'Content-Type': 'text/plain; charset=utf-8',
+    'Content-Length': tampon.length,
+    ...entetesExtra
+  });
+  reponse.end(methode === 'HEAD' ? undefined : tampon);
+}
+
+const serveur = http.createServer((requete, reponse) => {
+  /* Un serveur de fichiers statiques n'accepte que la lecture (GET et HEAD). */
+  const methode = (requete.method || 'GET').toUpperCase();
+  if (methode !== 'GET' && methode !== 'HEAD') {
+    envoyerTexte(reponse, 405, 'Méthode non autorisée', methode, {
+      Allow: 'GET, HEAD'
+    });
     return;
   }
 
-  const chemin = demande.endsWith('/') ? demande + 'index.html' : demande;
-  const fichier = path.join(RACINE, chemin);
+  let demande;
+  try {
+    /* On retire les paramètres (?…) et l'ancre (#…), puis on décode les accents. */
+    const urlBrute = (requete.url || '/').split('?')[0].split('#')[0];
+    demande = decodeURIComponent(urlBrute);
+  } catch {
+    envoyerTexte(reponse, 400, 'Adresse invalide', methode);
+    return;
+  }
+
+  if (demande.includes('\0')) {
+    envoyerTexte(reponse, 400, 'Adresse invalide', methode);
+    return;
+  }
+
+  /* On ramène les antislashs (Windows) en slashs avant d'inspecter le chemin. */
+  const demandeNorm = demande.replace(/\\/g, '/');
+  const chemin = demandeNorm.endsWith('/') ? demandeNorm + 'index.html' : demandeNorm;
+  const cheminRelatif = chemin.replace(/^\/+/, '');
+  const fichier = path.resolve(RACINE, cheminRelatif);
 
   /* Sécurité : le fichier demandé doit rester à l'intérieur du dossier de
-     l'application (on refuse les astuces du type « ../../ »). */
+     l'application (pas de « ../../ ») et ne doit jamais viser un fichier
+     ou dossier caché commençant par « . » (.git, .claude, .gitignore, .env…). */
+  const racinePrefixe = RACINE.endsWith(path.sep) ? RACINE : RACINE + path.sep;
   const relatif = path.relative(RACINE, fichier);
-  if (relatif.startsWith('..') || path.isAbsolute(relatif)) {
-    reponse.writeHead(403).end('Accès refusé');
+  const segmentCacheDemande = demandeNorm
+    .split('/')
+    .some((segment) => segment.startsWith('.') && segment !== '.');
+  const segmentCacheResolu = relatif
+    .split(/[/\\]+/)
+    .some((segment) => segment.startsWith('.'));
+
+  if (
+    !fichier.startsWith(racinePrefixe) ||
+    !relatif ||
+    relatif.startsWith('..') ||
+    path.isAbsolute(relatif) ||
+    segmentCacheDemande ||
+    segmentCacheResolu
+  ) {
+    envoyerTexte(reponse, 403, 'Accès refusé', methode);
     return;
   }
 
   fs.readFile(fichier, (erreur, contenu) => {
     if (erreur) {
-      reponse.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      reponse.end('Fichier introuvable : ' + chemin);
+      envoyerTexte(reponse, 404, 'Fichier introuvable : ' + chemin, methode);
       return;
     }
     reponse.writeHead(200, {
       'Content-Type': TYPES[path.extname(fichier).toLowerCase()] || 'application/octet-stream',
+      'Content-Length': contenu.length,
       /* Pendant les tests, on évite que le navigateur garde d'anciennes
          versions des fichiers dans son cache ordinaire. */
       'Cache-Control': 'no-cache'
     });
-    reponse.end(contenu);
+    reponse.end(methode === 'HEAD' ? undefined : contenu);
   });
-}).listen(PORT, HOTE, () => {
-  console.log('Omni-Prompteur : http://localhost:' + PORT);
+});
+
+serveur.listen(PORT, HOTE, () => {
+  const adresse = serveur.address();
+  const portEffectif = typeof adresse === 'object' && adresse ? adresse.port : PORT;
+  console.log('Omni-Prompteur : http://localhost:' + portEffectif);
   if (HOTE !== '127.0.0.1') console.log('Attention : le serveur est aussi accessible depuis le réseau (' + HOTE + ').');
 });

@@ -12,7 +12,7 @@
        ne peut partir vers un serveur extérieur, même par erreur.
        « blob: » autorise la relecture des enregistrements stockés sur l'appareil. -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'">
 
   <title>Omni-Prompteur</title>
   <meta name="description" content="Télé-prompteur pour créateurs de contenu : texte défilant sur la caméra ou pendant un enregistrement audio, 100 % hors ligne.">
@@ -78,7 +78,8 @@
        Un seul « écran » est visible à la fois : les autres portent l'attribut
        hidden, que app.js retire ou remet selon la navigation.
        ===================================================================== -->
-  <main id="ecran-accueil" class="ecran" data-ecran="accueil">
+  <main>
+  <section id="ecran-accueil" class="ecran" data-ecran="accueil" aria-label="Accueil">
     <header class="entete-accueil">
       <img class="logo" src="icons/icon.svg" alt="" width="56" height="56">
       <div>
@@ -88,7 +89,7 @@
     </header>
 
     <button id="bouton-installer" class="bouton bouton-secondaire bouton-large" type="button" hidden>
-      <svg class="icone"><use href="#i-telecharger"></use></svg> Installer l'application
+      <svg class="icone" aria-hidden="true"><use href="#i-telecharger"></use></svg> Installer l'application
     </button>
 
     <section class="carte carte-script-actif" aria-labelledby="titre-carte-script">
@@ -97,22 +98,22 @@
       <p id="script-actif-details" class="texte-doux"></p>
       <div class="rangee-boutons">
         <button class="bouton bouton-secondaire" type="button" data-aller="bibliotheque">
-          <svg class="icone"><use href="#i-livre"></use></svg> Changer
+          <svg class="icone" aria-hidden="true"><use href="#i-livre"></use></svg> Changer
         </button>
         <button id="bouton-modifier-script-actif" class="bouton bouton-secondaire" type="button">
-          <svg class="icone"><use href="#i-crayon"></use></svg> Modifier
+          <svg class="icone" aria-hidden="true"><use href="#i-crayon"></use></svg> Modifier
         </button>
       </div>
     </section>
 
     <section class="choix-mode" aria-label="Choisir un mode">
       <button id="bouton-mode-videaste" class="carte-mode" type="button">
-        <svg class="icone icone-mode"><use href="#i-camera"></use></svg>
+        <svg class="icone icone-mode" aria-hidden="true"><use href="#i-camera"></use></svg>
         <span class="carte-mode-titre">Vidéaste</span>
         <span class="carte-mode-texte">Caméra en direct, texte en surimpression, enregistrement vidéo</span>
       </button>
       <button id="bouton-mode-podcast" class="carte-mode" type="button">
-        <svg class="icone icone-mode"><use href="#i-micro"></use></svg>
+        <svg class="icone icone-mode" aria-hidden="true"><use href="#i-micro"></use></svg>
         <span class="carte-mode-titre">Podcast</span>
         <span class="carte-mode-texte">Micro seul, texte défilant, enregistrement audio</span>
       </button>
@@ -120,21 +121,21 @@
 
     <nav class="menu-accueil" aria-label="Menu principal">
       <button class="bouton-menu" type="button" data-aller="bibliotheque">
-        <svg class="icone"><use href="#i-livre"></use></svg>
+        <svg class="icone" aria-hidden="true"><use href="#i-livre"></use></svg>
         <span>Bibliothèque de scripts</span>
       </button>
       <button class="bouton-menu" type="button" data-aller="enregistrements">
-        <svg class="icone"><use href="#i-liste"></use></svg>
+        <svg class="icone" aria-hidden="true"><use href="#i-liste"></use></svg>
         <span>Mes enregistrements</span>
       </button>
       <button class="bouton-menu" type="button" data-aller="reglages">
-        <svg class="icone"><use href="#i-reglages"></use></svg>
+        <svg class="icone" aria-hidden="true"><use href="#i-reglages"></use></svg>
         <span>Réglages d'affichage</span>
       </button>
     </nav>
 
     <p class="mention-confidentialite">
-      <svg class="icone"><use href="#i-cadenas"></use></svg>
+      <svg class="icone" aria-hidden="true"><use href="#i-cadenas"></use></svg>
       Tout reste sur votre appareil : aucun texte, image ou son n'est envoyé sur Internet.
     </p>
 
@@ -155,7 +156,7 @@
            l'application installée (règle .note-installation de la feuille de style). -->
       <p class="a-propos-lien note-installation"><strong>Installation sur Android&nbsp;:</strong> si Chrome indique «&nbsp;Cette appli est déjà installée&nbsp;» alors qu'elle ne l'est pas, c'est une limite de Chrome quand une autre application de ce site est déjà installée. Utilisez un autre navigateur (Brave, par exemple), ou choisissez «&nbsp;Créer un raccourci&nbsp;».</p>
     </section>
-  </main>
+  </section>
 
   <!-- =====================================================================
        ÉCRAN 2 : BIBLIOTHÈQUE DE SCRIPTS
@@ -163,32 +164,32 @@
   <section id="ecran-bibliotheque" class="ecran" data-ecran="bibliotheque" hidden>
     <header class="barre-ecran">
       <button class="bouton-icone" type="button" data-action="retour" aria-label="Retour" title="Retour">
-        <svg class="icone"><use href="#i-retour"></use></svg>
+        <svg class="icone" aria-hidden="true"><use href="#i-retour"></use></svg>
       </button>
       <h1>Bibliothèque de scripts</h1>
     </header>
 
     <div class="rangee-boutons">
       <button id="bouton-nouveau-script" class="bouton bouton-primaire" type="button">
-        <svg class="icone"><use href="#i-plus"></use></svg> Nouveau script
+        <svg class="icone" aria-hidden="true"><use href="#i-plus"></use></svg> Nouveau script
       </button>
       <!-- Le vrai champ « fichier » est invisible : on clique sur son étiquette,
            plus facile à mettre en forme qu'un champ de fichier natif. -->
       <label class="bouton bouton-secondaire" for="champ-import">
-        <svg class="icone"><use href="#i-importer"></use></svg> Importer .txt / .pdf
+        <svg class="icone" aria-hidden="true"><use href="#i-importer"></use></svg> Importer .txt / .md / .pdf
       </label>
-      <input id="champ-import" class="visuellement-cache" type="file" accept=".txt,.pdf,text/plain,application/pdf" multiple>
+      <input id="champ-import" class="visuellement-cache" type="file" accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf" multiple>
     </div>
 
     <div class="champ-recherche">
-      <svg class="icone"><use href="#i-recherche"></use></svg>
+      <svg class="icone" aria-hidden="true"><use href="#i-recherche"></use></svg>
       <input id="recherche-scripts" type="search" placeholder="Rechercher un script…" aria-label="Rechercher un script">
     </div>
 
     <p id="etat-import" class="etat-import" role="status" hidden></p>
     <ul id="liste-scripts" class="liste"></ul>
     <p id="bibliotheque-vide" class="liste-vide" hidden>
-      Aucun script pour l'instant. Créez-en un ou importez un fichier texte ou PDF.
+      Aucun script pour l'instant. Créez-en un ou importez un fichier texte, Markdown ou PDF.
     </p>
 
     <!-- Sauvegarde : tous les scripts dans un seul fichier .json, à garder à
@@ -201,10 +202,10 @@
       </p>
       <div class="rangee-boutons">
         <button id="bouton-sauvegarder-scripts" class="bouton bouton-secondaire" type="button">
-          <svg class="icone"><use href="#i-telecharger"></use></svg> Sauvegarder mes scripts
+          <svg class="icone" aria-hidden="true"><use href="#i-telecharger"></use></svg> Sauvegarder mes scripts
         </button>
         <label class="bouton bouton-secondaire" for="champ-restauration">
-          <svg class="icone"><use href="#i-importer"></use></svg> Restaurer une sauvegarde
+          <svg class="icone" aria-hidden="true"><use href="#i-importer"></use></svg> Restaurer une sauvegarde
         </label>
         <input id="champ-restauration" class="visuellement-cache" type="file" accept=".json,application/json">
       </div>
@@ -217,7 +218,7 @@
   <section id="ecran-editeur" class="ecran" data-ecran="editeur" hidden>
     <header class="barre-ecran">
       <button class="bouton-icone" type="button" data-action="retour" aria-label="Retour" title="Retour">
-        <svg class="icone"><use href="#i-retour"></use></svg>
+        <svg class="icone" aria-hidden="true"><use href="#i-retour"></use></svg>
       </button>
       <h1>Script</h1>
       <span id="etat-sauvegarde" class="etat-sauvegarde" role="status"></span>
@@ -244,10 +245,16 @@
 
     <div class="rangee-boutons">
       <button id="bouton-utiliser-script" class="bouton bouton-primaire" type="button">
-        <svg class="icone"><use href="#i-coche"></use></svg> Utiliser ce script
+        <svg class="icone" aria-hidden="true"><use href="#i-coche"></use></svg> Utiliser ce script
+      </button>
+      <button id="bouton-exporter-txt" class="bouton bouton-secondaire" type="button">
+        <svg class="icone" aria-hidden="true"><use href="#i-telecharger"></use></svg> Exporter .txt
+      </button>
+      <button id="bouton-exporter-md" class="bouton bouton-secondaire" type="button">
+        <svg class="icone" aria-hidden="true"><use href="#i-telecharger"></use></svg> Exporter .md
       </button>
       <button id="bouton-supprimer-script" class="bouton bouton-danger" type="button">
-        <svg class="icone"><use href="#i-corbeille"></use></svg> Supprimer
+        <svg class="icone" aria-hidden="true"><use href="#i-corbeille"></use></svg> Supprimer
       </button>
     </div>
   </section>
@@ -260,7 +267,7 @@
   <section id="ecran-reglages" class="ecran" data-ecran="reglages" hidden>
     <header class="barre-ecran">
       <button class="bouton-icone" type="button" data-action="retour" aria-label="Retour" title="Retour">
-        <svg class="icone"><use href="#i-retour"></use></svg>
+        <svg class="icone" aria-hidden="true"><use href="#i-retour"></use></svg>
       </button>
       <h1>Réglages d'affichage</h1>
     </header>
@@ -359,6 +366,19 @@
       <fieldset>
         <legend>Caméra et micro</legend>
         <div class="champ">
+          <label for="reglage-camera">Caméra</label>
+          <select id="reglage-camera" aria-describedby="aide-appareils-media">
+            <option value="">Automatique (caméra par défaut)</option>
+          </select>
+        </div>
+        <div class="champ">
+          <label for="reglage-micro">Micro</label>
+          <select id="reglage-micro" aria-describedby="aide-appareils-media">
+            <option value="">Automatique (micro par défaut)</option>
+          </select>
+          <small id="aide-appareils-media" class="texte-doux">Les noms des appareils s'affichent une fois l'accès à la caméra ou au micro autorisé.</small>
+        </div>
+        <div class="champ">
           <label for="reglage-qualite">Qualité vidéo</label>
           <select id="reglage-qualite" data-reglage="qualiteVideo">
             <option value="720">Standard 720p (≈ 25 Mo par minute, plus léger)</option>
@@ -382,17 +402,17 @@
   <section id="ecran-enregistrements" class="ecran" data-ecran="enregistrements" hidden>
     <header class="barre-ecran">
       <button class="bouton-icone" type="button" data-action="retour" aria-label="Retour" title="Retour">
-        <svg class="icone"><use href="#i-retour"></use></svg>
+        <svg class="icone" aria-hidden="true"><use href="#i-retour"></use></svg>
       </button>
       <h1>Mes enregistrements</h1>
     </header>
 
     <div class="onglets" role="tablist" aria-label="Type d'enregistrement">
       <button class="onglet" type="button" role="tab" data-filtre="video" aria-selected="true">
-        <svg class="icone"><use href="#i-camera"></use></svg> Vidéos
+        <svg class="icone" aria-hidden="true"><use href="#i-camera"></use></svg> Vidéos
       </button>
       <button class="onglet" type="button" role="tab" data-filtre="audio" aria-selected="false">
-        <svg class="icone"><use href="#i-micro"></use></svg> Audio
+        <svg class="icone" aria-hidden="true"><use href="#i-micro"></use></svg> Audio
       </button>
     </div>
 
@@ -410,10 +430,10 @@
        La vidéo enregistrée ne contient QUE le flux de la caméra : le texte
        n'est qu'un élément de la page posé par-dessus, il n'est jamais filmé.
        ===================================================================== -->
-  <section id="ecran-prompteur" class="ecran-prompteur zone-prompteur" data-ecran="prompteur" data-mode="videaste" hidden>
+  <section id="ecran-prompteur" class="ecran-prompteur zone-prompteur" data-ecran="prompteur" data-mode="videaste" aria-label="Prompteur" hidden>
     <video id="video-camera" class="video-camera" playsinline muted autoplay></video>
     <div class="fond-podcast" aria-hidden="true">
-      <svg class="icone"><use href="#i-micro"></use></svg>
+      <svg class="icone" aria-hidden="true"><use href="#i-micro"></use></svg>
     </div>
 
     <div id="calque-texte" class="calque-texte">
@@ -440,7 +460,7 @@
 
     <header class="prompteur-haut">
       <button id="bouton-quitter-prompteur" class="bouton-icone" type="button" aria-label="Quitter le prompteur" title="Quitter (Échap)">
-        <svg class="icone"><use href="#i-retour"></use></svg>
+        <svg class="icone" aria-hidden="true"><use href="#i-retour"></use></svg>
       </button>
       <div id="indicateur-enregistrement" class="indicateur-enregistrement" hidden>
         <span class="point-rec" aria-hidden="true"></span>
@@ -452,16 +472,16 @@
       <span id="info-resolution" class="info-resolution"></span>
       <div class="groupe-boutons-haut">
         <button id="bouton-masquer-texte" class="bouton-icone mode-videaste-seulement" type="button" aria-pressed="false" aria-label="Masquer le texte" title="Masquer / afficher le texte (M)">
-          <svg class="icone"><use href="#i-oeil"></use></svg>
+          <svg class="icone" aria-hidden="true"><use href="#i-oeil"></use></svg>
         </button>
         <button id="bouton-changer-camera" class="bouton-icone mode-videaste-seulement" type="button" hidden aria-label="Changer de caméra" title="Caméra avant / arrière">
-          <svg class="icone"><use href="#i-changer-camera"></use></svg>
+          <svg class="icone" aria-hidden="true"><use href="#i-changer-camera"></use></svg>
         </button>
         <button id="bouton-reglages-rapides" class="bouton-icone" type="button" aria-expanded="false" aria-controls="panneau-reglages-rapides" aria-label="Réglages rapides" title="Réglages rapides">
-          <svg class="icone"><use href="#i-reglages"></use></svg>
+          <svg class="icone" aria-hidden="true"><use href="#i-reglages"></use></svg>
         </button>
         <button id="bouton-plein-ecran" class="bouton-icone" type="button" aria-label="Plein écran" title="Plein écran (F)">
-          <svg class="icone"><use href="#i-plein-ecran"></use></svg>
+          <svg class="icone" aria-hidden="true"><use href="#i-plein-ecran"></use></svg>
         </button>
       </div>
     </header>
@@ -515,24 +535,24 @@
       <div class="commandes">
         <div class="groupe-commandes groupe-lecture">
           <button id="bouton-debut" class="bouton-icone" type="button" aria-label="Retour au début" title="Retour au début (Début)">
-            <svg class="icone"><use href="#i-debut"></use></svg>
+            <svg class="icone" aria-hidden="true"><use href="#i-debut"></use></svg>
           </button>
           <button id="bouton-reculer" class="bouton-icone" type="button" aria-label="Reculer dans le texte" title="Reculer (↑)">
-            <svg class="icone"><use href="#i-reculer"></use></svg>
+            <svg class="icone" aria-hidden="true"><use href="#i-reculer"></use></svg>
           </button>
           <button id="bouton-lecture" class="bouton-icone bouton-lecture" type="button" aria-label="Lancer le défilement" title="Lecture / pause (Espace)">
-            <svg class="icone"><use href="#i-lecture"></use></svg>
+            <svg class="icone" aria-hidden="true"><use href="#i-lecture"></use></svg>
           </button>
           <button id="bouton-avancer" class="bouton-icone" type="button" aria-label="Avancer dans le texte" title="Avancer (↓)">
-            <svg class="icone"><use href="#i-avancer"></use></svg>
+            <svg class="icone" aria-hidden="true"><use href="#i-avancer"></use></svg>
           </button>
           <div class="vitesse-rapide">
             <button id="bouton-vitesse-moins" class="bouton-icone bouton-petit-rond" type="button" aria-label="Ralentir" title="Ralentir (−)">
-              <svg class="icone"><use href="#i-moins"></use></svg>
+              <svg class="icone" aria-hidden="true"><use href="#i-moins"></use></svg>
             </button>
             <output id="valeur-vitesse-rapide" class="valeur-vitesse" data-valeur-reglage="vitesse"></output>
             <button id="bouton-vitesse-plus" class="bouton-icone bouton-petit-rond" type="button" aria-label="Accélérer" title="Accélérer (+)">
-              <svg class="icone"><use href="#i-plus"></use></svg>
+              <svg class="icone" aria-hidden="true"><use href="#i-plus"></use></svg>
             </button>
           </div>
           <span id="temps-restant" class="temps-restant"></span>
@@ -540,21 +560,22 @@
 
         <div class="groupe-commandes groupe-enregistrement">
           <button id="bouton-enregistrer" class="bouton bouton-rec" type="button">
-            <svg class="icone"><use href="#i-rec"></use></svg> <span>Enregistrer</span>
+            <svg class="icone" aria-hidden="true"><use href="#i-rec"></use></svg> <span>Enregistrer</span>
           </button>
           <button id="bouton-pause-enregistrement" class="bouton bouton-secondaire" type="button" hidden>
-            <svg class="icone"><use href="#i-pause"></use></svg> <span>Pause</span>
+            <svg class="icone" aria-hidden="true"><use href="#i-pause"></use></svg> <span>Pause</span>
           </button>
           <button id="bouton-arreter-enregistrement" class="bouton bouton-secondaire" type="button" hidden>
-            <svg class="icone"><use href="#i-stop"></use></svg> <span>Arrêter</span>
+            <svg class="icone" aria-hidden="true"><use href="#i-stop"></use></svg> <span>Arrêter</span>
           </button>
           <button id="bouton-voir-enregistrements" class="bouton-icone" type="button" aria-label="Voir mes enregistrements" title="Mes enregistrements">
-            <svg class="icone"><use href="#i-liste"></use></svg>
+            <svg class="icone" aria-hidden="true"><use href="#i-liste"></use></svg>
           </button>
         </div>
       </div>
     </footer>
   </section>
+  </main>
 
   <!-- =====================================================================
        BOÎTES DE DIALOGUE
@@ -590,7 +611,7 @@
     <div class="entete-dialogue">
       <h2 id="media-titre">Enregistrement</h2>
       <button id="media-fermer" class="bouton-icone" type="button" aria-label="Fermer">
-        <svg class="icone"><use href="#i-fermer"></use></svg>
+        <svg class="icone" aria-hidden="true"><use href="#i-fermer"></use></svg>
       </button>
     </div>
     <div id="media-lecteur" class="media-lecteur"></div>
@@ -601,16 +622,16 @@
     <p id="media-infos" class="texte-doux"></p>
     <div class="rangee-boutons">
       <button id="media-telecharger" class="bouton bouton-primaire" type="button">
-        <svg class="icone"><use href="#i-telecharger"></use></svg> <span id="media-telecharger-texte">Télécharger</span>
+        <svg class="icone" aria-hidden="true"><use href="#i-telecharger"></use></svg> <span id="media-telecharger-texte">Télécharger</span>
       </button>
       <button id="media-partager" class="bouton bouton-secondaire" type="button" hidden>
-        <svg class="icone"><use href="#i-partager"></use></svg> Partager
+        <svg class="icone" aria-hidden="true"><use href="#i-partager"></use></svg> Partager
       </button>
       <button id="media-wav" class="bouton bouton-secondaire" type="button" hidden>
-        <svg class="icone"><use href="#i-onde"></use></svg> Télécharger en .wav
+        <svg class="icone" aria-hidden="true"><use href="#i-onde"></use></svg> Télécharger en .wav
       </button>
       <button id="media-supprimer" class="bouton bouton-danger" type="button">
-        <svg class="icone"><use href="#i-corbeille"></use></svg> Supprimer
+        <svg class="icone" aria-hidden="true"><use href="#i-corbeille"></use></svg> Supprimer
       </button>
     </div>
   </dialog>
@@ -618,7 +639,10 @@
   <!-- Bandeau affiché quand une nouvelle version de l'application est prête. -->
   <div id="bandeau-mise-a-jour" class="bandeau-mise-a-jour" role="status" hidden>
     <span>Une nouvelle version est disponible.</span>
-    <button id="bouton-mettre-a-jour" class="bouton bouton-primaire bouton-petit" type="button">Mettre à jour</button>
+    <div class="bandeau-mise-a-jour-actions">
+      <button id="bouton-mettre-a-jour" class="bouton bouton-primaire bouton-petit" type="button">Mettre à jour</button>
+      <button id="btn-maj-plus-tard" class="bouton bouton-secondaire bouton-petit" type="button">Plus tard</button>
+    </div>
   </div>
 
   <!-- Petites notifications temporaires (« Script enregistré », etc.).

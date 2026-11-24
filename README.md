@@ -35,8 +35,10 @@ Dans les deux modes :
 ### Bibliothèque de scripts
 
 - Saisie ou collage de texte, avec **sauvegarde automatique**.
-- Import de fichiers **.txt** (encodages UTF-8, UTF-16 et ancien Windows détectés) et
-  **.pdf** (extraction du texte, recomposition des paragraphes).
+- Import de fichiers **.txt**, **.md** (Markdown) — encodages UTF-8, UTF-16 et ancien
+  Windows détectés — et **.pdf** (extraction du texte, recomposition des paragraphes ;
+  le lecteur PDF est téléchargé au premier import puis conservé hors ligne).
+- Export individuel d'un script en **.txt** ou **.md** (depuis l'éditeur ou la bibliothèque).
 - Recherche, modification, suppression, sélection rapide depuis l'accueil.
 - Nombre de mots et durée de lecture estimée.
 - Les passages entre crochets, `[comme ceci]`, s'affichent en couleur atténuée : idéal
@@ -193,8 +195,9 @@ flèches, fonctionnent directement.
 ```
 index.html          structure des écrans, icônes (SVG) et boîtes de dialogue
 styles.css          présentation : couleurs, mise en page, prompteur, adaptations mobiles
-app.js              tout le fonctionnement, en 17 sections commentées
-sw.js               service worker : copie hors ligne et mises à jour
+app.js              point d'entrée (liaison des modules et cycle de vie de la page)
+js/                 17 modules ES natifs (outils, BD, navigation, réglages, scripts, défilement, média, enregistrement, PWA…)
+sw.js               service worker : copie hors ligne, cache paresseux de pdf.js et mises à jour
 manifest.json       fiche d'identité de l'application (nom, icônes, couleurs)
 icons/              icônes (icon.svg est la source des PNG)
 fonts/              polices intégrées (.woff2) et leurs licences
@@ -209,18 +212,18 @@ Aucune dépendance à installer, aucune étape de compilation.
 ### Publier une modification
 
 ⚠️ Après toute modification d'un fichier mis en cache (`index.html`, `styles.css`,
-`app.js`, `manifest.json`, `icons/`, `fonts/`, `libs/`), **incrémenter la version**
+`app.js`, `js/`, `manifest.json`, `icons/`, `fonts/`), **incrémenter la version**
 en haut de `sw.js` :
 
 ```js
-const VERSION = 'omni-prompteur-v8';   // → v9, v10…
+const VERSION = 'omni-prompteur-v11';   // → v12, v13…
 ```
 
 Sans cela, les personnes ayant déjà ouvert l'application continuent de voir
 l'ancienne version. Un fichier ajouté doit aussi être inscrit dans la liste `FICHIERS`
 du même fichier. Côté utilisateur, un bandeau « Une nouvelle version est disponible »
-apparaît alors, et la mise à jour s'applique quand il le décide (jamais pendant un
-enregistrement).
+apparaît alors (avec une option « Plus tard »), et la mise à jour s'applique quand il
+le décide (jamais pendant un enregistrement).
 
 ### Mettre à jour pdf.js
 
@@ -229,9 +232,9 @@ npm pack pdfjs-dist@<version>
 ```
 
 Extraire l'archive, puis copier `legacy/build/pdf.min.mjs` et
-`legacy/build/pdf.worker.min.mjs` dans `libs/pdfjs/` (sans oublier d'incrémenter la
-version du service worker). La version « legacy » est utilisée pour sa compatibilité
-avec davantage de navigateurs.
+`legacy/build/pdf.worker.min.mjs` dans `libs/pdfjs/` (sans oublier d'incrémenter
+`CACHE_PDF` dans `sw.js`, ex. `'omni-prompteur-pdf-v1'` → `'omni-prompteur-pdf-v2'`).
+La version « legacy » est utilisée pour sa compatibilité avec davantage de navigateurs.
 
 ---
 

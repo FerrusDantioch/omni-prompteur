@@ -370,7 +370,7 @@ lancer('Omni-Prompteur', async () => {
     await p.click('#bouton-enregistrer');
     await p.waitForSelector('#decompte:not([hidden])', { timeout: 5000 });
     await p.keyboard.press('Escape');
-    await p.waitForSelector('#decompte[hidden]', { timeout: 5000 });
+    await p.waitForSelector('#decompte[hidden]', { state: 'attached', timeout: 5000 });
 
     const etatApresEchap = await p.evaluate(() => ({
       decompteCache: document.getElementById('decompte').hidden,
@@ -414,7 +414,7 @@ lancer('Omni-Prompteur', async () => {
     verifier(ebml.hasDuration && ebml.durationMs > 0, 'le fichier .webm téléchargé contient une durée EBML valide (> 0 ms)', ebml);
 
     await p.click('#media-fermer');
-    await p.waitForSelector('#dialogue-media:not([open])');
+    await p.waitForSelector('#dialogue-media:not([open])', { state: 'attached' });
     await aller(p, '#bouton-quitter-prompteur');
     await p.waitForSelector('#ecran-accueil:not([hidden])');
 
@@ -450,7 +450,7 @@ lancer('Omni-Prompteur', async () => {
     verifier(nomWav.endsWith('.wav') && wavInfo.ok, 'export .wav valide (RIFF/WAVE PCM, taille > 44 octets)', { nomWav, wavInfo, taille: wavBuf.length });
 
     await p.click('#media-fermer');
-    await p.waitForSelector('#dialogue-media:not([open])');
+    await p.waitForSelector('#dialogue-media:not([open])', { state: 'attached' });
     await aller(p, '#bouton-quitter-prompteur');
     await p.waitForSelector('#ecran-accueil:not([hidden])');
 

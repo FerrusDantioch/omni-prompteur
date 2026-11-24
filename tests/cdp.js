@@ -163,49 +163,76 @@ const chromium = {
     }
     const exe = executablePath || trouverNavigateur();
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'omni-cdp-'));
-    const child = spawn(
-      exe,
-      [
-        '--headless=new',
-        '--remote-debugging-port=0',
-        '--no-first-run',
-        '--no-default-browser-check',
-        '--disable-gpu',
-        '--disable-background-timer-throttling',
-        '--disable-renderer-backgrounding',
-        `--user-data-dir=${tmpDir}`,
-        ...args,
-        'about:blank'
-      ],
-      { stdio: ['ignore', 'pipe', 'pipe'] }
-    );
+    let child;
+    let ws;
+    try {
+      child = spawn(
+        exe,
+        [
+          '--headless=new',
+          '--remote-debugging-port=0',
+          '--no-first-run',
+          '--no-default-browser-check',
+          '--disable-gpu',
+          '--disable-background-timer-throttling',
+          '--disable-renderer-backgrounding',
+          `--user-data-dir=${tmpDir}`,
+          ...args,
+          'about:blank'
+        ],
+        { stdio: ['ignore', 'pipe', 'pipe'] }
+      );
 
-    const wsUrl = await new Promise((resolve, reject) => {
-      let logs = '';
-      const timer = setTimeout(() => {
-        reject(new Error('Délai dépassé au lancement du navigateur CDP.\n' + logs));
-      }, 15000);
-      const inspecter = (chunk) => {
-        logs += chunk.toString('utf8');
-        const m = logs.match(/DevTools listening on (ws:\/\/[^\s]+)/);
-        if (m) {
+      const wsUrl = await new Promise((resolve, reject) => {
+        let logs = '';
+        const timer = setTimeout(() => {
+          reject(new Error('Délai dépassé au lancement du navigateur CDP.\n' + logs));
+        }, 15000);
+        const inspecter = (chunk) => {
+          logs += chunk.toString('utf8');
+          const m = logs.match(/DevTools listening on (ws:\/\/[^\s]+)/);
+          if (m) {
+            clearTimeout(timer);
+            resolve(m[1]);
+          }
+        };
+        child.stderr.on('data', inspecter);
+        child.stdout.on('data', inspecter);
+        child.once('exit', (code) => {
           clearTimeout(timer);
-          resolve(m[1]);
-        }
-      };
-      child.stderr.on('data', inspecter);
-      child.stdout.on('data', inspecter);
-      child.once('exit', (code) => {
-        clearTimeout(timer);
-        reject(new Error(`Navigateur terminé prématurément (${code}).\n${logs}`));
+          reject(new Error(`Navigateur terminé prématurément (${code}).\n${logs}`));
+        });
       });
-    });
 
-    const ws = new WebSocket(wsUrl);
-    await new Promise((resolve, reject) => {
-      ws.addEventListener('open', resolve, { once: true });
-      ws.addEventListener('error', () => reject(new Error('Impossible d’ouvrir le WebSocket DevTools')), { once: true });
-    });
+      ws = new WebSocket(wsUrl);
+      await new Promise((resolve, reject) => {
+        ws.addEventListener('open', resolve, { once: true });
+        ws.addEventListener('error', () => reject(new Error('Impossible d’ouvrir le WebSocket DevTools')), { once: true });
+      });
+    } catch (err) {
+      try {
+        if (ws) ws.close();
+      } catch {
+        /* déjà fermé */
+      }
+      if (child) {
+        try {
+          child.kill();
+        } catch {
+          /* déjà terminé */
+        }
+        await new Promise((resolve) => {
+          if (child.exitCode !== null) return resolve();
+          const timer = setTimeout(resolve, 3000);
+          child.once('exit', () => {
+            clearTimeout(timer);
+            resolve();
+          });
+        });
+      }
+      fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      throw err;
+    }
 
     const cdp = new ConnexionCdp(ws);
     const contextes = new Map();
@@ -476,8 +503,28 @@ const chromium = {
                 throw derniereErreur || new Error('Délai dépassé dans waitForFunction');
               },
 
-              async waitForSelector(sel, { timeout = 15000 } = {}) {
-                await page.waitForFunction((s) => Boolean(document.querySelector(s)), sel, { timeout });
+              async waitForSelector(sel, { timeout = 15000, state = 'visible' } = {}) {
+                const etatsValides = new Set(['visible', 'hidden', 'attached', 'detached']);
+                if (!etatsValides.has(state)) {
+                  throw new Error(`État waitForSelector inconnu : ${state}`);
+                }
+                await page.waitForFunction(
+                  ({ s, st }) => {
+                    const el = document.querySelector(s);
+                    if (st === 'attached') return Boolean(el);
+                    if (st === 'detached') return !el;
+                    const visible = Boolean(
+                      el &&
+                      getComputedStyle(el).display !== 'none' &&
+                      getComputedStyle(el).visibility !== 'hidden' &&
+                      el.getClientRects().length > 0
+                    );
+                    if (st === 'visible') return visible;
+                    return !visible;
+                  },
+                  { s: sel, st: state },
+                  { timeout }
+                );
               },
 
               async goto(url, { timeout = 15000 } = {}) {
@@ -596,7 +643,7 @@ const chromium = {
               },
 
               async setInputFiles(sel, files, { timeout = 10000 } = {}) {
-                await page.waitForSelector(sel, { timeout });
+                await page.waitForSelector(sel, { state: 'attached', timeout });
                 const liste = (Array.isArray(files) ? files : [files]).map((f) => path.resolve(f));
                 const doc = await cdp.send('DOM.getDocument', { depth: 1 }, sessionId);
                 const q = await cdp.send('DOM.querySelector', { nodeId: doc.root.nodeId, selector: sel }, sessionId);

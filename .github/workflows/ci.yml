@@ -10,6 +10,7 @@ permissions:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Récupérer le dépôt
         uses: actions/checkout@v4
@@ -22,7 +23,14 @@ jobs:
       - name: Vérifier la syntaxe JavaScript et ESM (node --check)
         run: |
           while IFS= read -r -d '' f; do
-            node --check "$f"
+            case "$f" in
+              ./app.js|./js/*.js)
+                node --input-type=module --check < "$f"
+                ;;
+              *)
+                node --check "$f"
+                ;;
+            esac
           done < <(find . \( -path ./node_modules -o -path ./.git \) -prune -o -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
 
       - name: Contrôles statiques (CSP, .nojekyll, SW réciproque, DAG, docs)

@@ -211,8 +211,12 @@ function extraireImportsStatiques(rel) {
   const code = sansCommentairesJs(lire(rel));
   const baseDir = path.posix.dirname(rel);
   const imports = [];
-  const regex = /(?:^|[\n;])\s*import\s+(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/g;
-  for (const m of code.matchAll(regex)) {
+  const regexImport = /(?:^|[\n;])\s*import\s+(?:['"]([^'"]+)['"]|[^'";()]*?\s+from\s+['"]([^'"]+)['"])/g;
+  for (const m of code.matchAll(regexImport)) {
+    imports.push(normaliserChemin(m[1] || m[2], baseDir));
+  }
+  const regexExport = /(?:^|[\n;])\s*export\s+(?:\*(?:\s+as\s+[$\w]+)?|\{[^}]*\})\s+from\s+['"]([^'"]+)['"]/g;
+  for (const m of code.matchAll(regexExport)) {
     imports.push(normaliserChemin(m[1], baseDir));
   }
   return imports;
@@ -358,10 +362,10 @@ test('3. Zéro ressource externe chargée (HTML, CSS, JS)', () => {
 
   for (const rel of ['app.js', ...listerModulesJs()]) {
     const code = sansCommentairesJs(lire(rel));
-    assert.ok(!/\bfetch\s*\(\s*["'`]https?:\/\//i.test(code), `fetch externe interdit dans ${rel}`);
-    assert.ok(!/\bimport\s*\(\s*["'`]https?:\/\//i.test(code), `import() externe interdit dans ${rel}`);
+    assert.ok(!/\bfetch\s*\(\s*["'`](?:https?:)?\/\//i.test(code), `fetch externe interdit dans ${rel}`);
+    assert.ok(!/\bimport\s*\(\s*["'`](?:https?:)?\/\//i.test(code), `import() externe interdit dans ${rel}`);
     assert.ok(
-      !/\bnew\s+(?:Worker|SharedWorker|EventSource|WebSocket)\s*\(\s*["'`](?:https?|wss?):/i.test(code),
+      !/\bnew\s+(?:Worker|SharedWorker|EventSource|WebSocket)\s*\(\s*["'`](?:(?:https?|wss?):)?\/\//i.test(code),
       `Connexion/Worker externe interdit dans ${rel}`
     );
   }
@@ -621,6 +625,19 @@ test('8. Syntaxe JavaScript / ESM valide (node --check sur tous les .js et .mjs)
   const fichiers = listerFichiersJsMjs();
   assert.ok(fichiers.length > 0, 'Aucun fichier JS/MJS trouvé');
   for (const abs of fichiers) {
-    execFileSync(process.execPath, ['--check', abs], { stdio: 'pipe' });
+    const rel = path.relative(RACINE, abs).split(path.sep).join('/');
+    if (rel === 'app.js' || rel.startsWith('js/')) {
+      try {
+        execFileSync(process.execPath, ['--input-type=module', '--check'], {
+          input: lire(rel),
+          stdio: 'pipe'
+        });
+      } catch (err) {
+        const detail = err.stderr ? err.stderr.toString('utf8').trim() : err.message;
+        assert.fail(`Erreur de syntaxe ESM dans ${rel} :\n${detail}`);
+      }
+    } else {
+      execFileSync(process.execPath, ['--check', abs], { stdio: 'pipe' });
+    }
   }
 });
